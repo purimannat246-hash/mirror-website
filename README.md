@@ -1,4 +1,4 @@
-# Mirror — setup instructions
+# Glomi — setup instructions
 
 ## What's in this folder
 - `index.html` — your website

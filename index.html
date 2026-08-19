@@ -3,29 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mirror — your live makeup guide</title>
+<title>Glomi — your live makeup guide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #17141B;
-    --surface: #221D29;
-    --surface-2: #2B2432;
-    --coral: #FF8A5C;
-    --gold: #F2C14E;
+    --bg: #0A0A0C;
+    --surface: #16121A;
+    --surface-2: #201A26;
+    --pink: #FF2EC4;
+    --black: #0A0A0A;
     --text: #F6EFEA;
     --muted: #A99BA8;
     --good: #8FD3A0;
-    --ring-idle: rgba(255,138,92,0.35);
-    --ring-active: rgba(242,193,78,0.9);
+    --ring-idle: rgba(255,46,196,0.35);
+    --ring-active: rgba(255,46,196,0.9);
     --radius: 20px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(ellipse at 20% -10%, rgba(255,138,92,0.10), transparent 55%),
-      radial-gradient(ellipse at 100% 0%, rgba(242,193,78,0.08), transparent 50%),
+      radial-gradient(ellipse at 20% -10%, rgba(255,46,196,0.14), transparent 55%),
+      radial-gradient(ellipse at 100% 0%, rgba(0,0,0,0.6), transparent 50%),
       var(--bg);
     color:var(--text);
     font-family:'Sora', sans-serif;
@@ -51,15 +51,15 @@
     margin-bottom:28px;
   }
   .brand-name{
-    font-size:22px;
+    font-size:27px;
     display:flex;
     align-items:center;
     gap:8px;
   }
   .brand-dot{
     width:9px;height:9px;border-radius:50%;
-    background:var(--coral);
-    box-shadow:0 0 12px var(--coral);
+    background:var(--pink);
+    box-shadow:0 0 12px var(--pink);
   }
   .price-pill{
     font-size:11px;
@@ -74,18 +74,18 @@
     text-transform:uppercase;
     font-size:11px;
     letter-spacing:0.14em;
-    color:var(--coral);
+    color:var(--pink);
     font-weight:600;
     margin-bottom:10px;
   }
   .headline{
-    font-size:32px;
-    line-height:1.15;
+    font-size:40px;
+    line-height:1.12;
     margin:0 0 8px;
   }
   .sub{
     color:var(--muted);
-    font-size:15px;
+    font-size:16px;
     line-height:1.5;
     margin:0 0 32px;
   }
@@ -113,10 +113,10 @@
     cursor:pointer;
     transition:all 0.15s ease;
   }
-  .chip:hover{ border-color:var(--coral); }
+  .chip:hover{ border-color:var(--pink); }
   .chip.active{
-    background:linear-gradient(135deg, var(--coral), var(--gold));
-    color:#221408;
+    background:linear-gradient(135deg, var(--pink), var(--black));
+    color:#fff;
     border-color:transparent;
     font-weight:600;
   }
@@ -160,21 +160,21 @@
     cursor:pointer;
     font-family:'Sora', sans-serif;
   }
-  .scan-btn:hover{ color:var(--text); border-color:var(--coral); }
-  .scan-status{ font-size:12px; color:var(--gold); }
+  .scan-btn:hover{ color:var(--text); border-color:var(--pink); }
+  .scan-status{ font-size:12px; color:var(--pink); }
   .primary-btn{
     width:100%;
     padding:16px;
     border-radius:14px;
     border:none;
-    background:linear-gradient(135deg, var(--coral), var(--gold));
-    color:#221408;
+    background:linear-gradient(135deg, var(--pink), var(--black));
+    color:#fff;
     font-family:'Sora', sans-serif;
     font-weight:700;
     font-size:15px;
     cursor:pointer;
     transition:transform 0.1s ease, box-shadow 0.15s ease;
-    box-shadow:0 8px 24px rgba(255,138,92,0.25);
+    box-shadow:0 8px 24px rgba(255,46,196,0.35);
   }
   .primary-btn:active{ transform:scale(0.98); }
   .primary-btn:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
@@ -219,7 +219,7 @@
     transition:background 0.2s ease;
   }
   .step-dot.done{ background:var(--good); }
-  .step-dot.active{ background:linear-gradient(90deg, var(--coral), var(--gold)); }
+  .step-dot.active{ background:linear-gradient(90deg, var(--pink), var(--black)); }
 
   .mirror-wrap{
     position:relative;
@@ -263,8 +263,8 @@
     padding:20px;
   }
   .mirror-placeholder button{
-    background:var(--coral);
-    color:#221408;
+    background:var(--pink);
+    color:#fff;
     border:none;
     padding:10px 18px;
     border-radius:10px;
@@ -282,18 +282,18 @@
   }
   .step-count{
     font-size:11px;
-    color:var(--gold);
+    color:var(--pink);
     text-transform:uppercase;
     letter-spacing:0.1em;
     font-weight:600;
     margin-bottom:6px;
   }
   .step-title{
-    font-size:21px;
+    font-size:27px;
     margin:0 0 8px;
   }
   .step-instructions{
-    font-size:14px;
+    font-size:15px;
     color:var(--muted);
     line-height:1.5;
     margin:0;
@@ -322,7 +322,7 @@
     padding:5px 10px;
     border-radius:8px;
   }
-  .speak-toggle.on{ color:var(--gold); }
+  .speak-toggle.on{ color:var(--pink); }
 
   .diagram-card{
     background:var(--surface);
@@ -346,8 +346,8 @@
     opacity:0.55;
   }
   .diagram-marker{
-    fill:var(--gold);
-    filter:drop-shadow(0 0 4px rgba(242,193,78,0.6));
+    fill:var(--pink);
+    filter:drop-shadow(0 0 4px rgba(255,46,196,0.6));
   }
   .diagram-copy{
     font-size:13px;
@@ -358,7 +358,7 @@
 
   .feedback-card{
     background:var(--surface-2);
-    border-left:3px solid var(--gold);
+    border-left:3px solid var(--pink);
     border-radius:12px;
     padding:14px 16px;
     margin-bottom:16px;
@@ -369,7 +369,7 @@
   .feedback-card.show{ display:block; }
   .feedback-label{
     font-size:11px;
-    color:var(--gold);
+    color:var(--pink);
     text-transform:uppercase;
     letter-spacing:0.08em;
     font-weight:600;
@@ -392,8 +392,8 @@
     padding:16px;
     border-radius:14px;
     border:none;
-    background:linear-gradient(135deg, var(--coral), var(--gold));
-    color:#221408;
+    background:linear-gradient(135deg, var(--pink), var(--black));
+    color:#fff;
     font-weight:700;
     font-size:14px;
     cursor:pointer;
@@ -412,7 +412,7 @@
   .nav-btn:disabled{ opacity:0.3; cursor:not-allowed; }
 
   .done-screen{ text-align:center; padding:60px 0; }
-  .done-screen .headline{ font-size:28px; }
+  .done-screen .headline{ font-size:34px; }
 
   .loading-line{
     display:flex;
@@ -426,7 +426,7 @@
     width:16px;height:16px;
     border-radius:50%;
     border:2px solid rgba(169,155,168,0.3);
-    border-top-color:var(--coral);
+    border-top-color:var(--pink);
     animation:spin 0.7s linear infinite;
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
@@ -444,7 +444,7 @@
 <div class="app">
 
   <div class="brand">
-    <div class="brand-name"><span class="brand-dot"></span>mirror</div>
+    <div class="brand-name"><span class="brand-dot"></span>Glomi</div>
     <div class="price-pill">from €5/mo · pay per look</div>
   </div>
 
@@ -457,10 +457,10 @@
     <span class="field-label">Occasion</span>
     <div class="chips" id="occasion-chips">
       <div class="chip" data-occasion="School">School</div>
-      <div class="chip" data-occasion="Party">Party</div>
       <div class="chip" data-occasion="Date">Date</div>
+      <div class="chip" data-occasion="Party">Party</div>
       <div class="chip" data-occasion="Everyday">Everyday</div>
-      <div class="chip" data-occasion="Job interview">Job interview</div>
+      <div class="chip" data-occasion="Other">Other</div>
     </div>
 
     <span class="field-label">Your products</span>
@@ -519,7 +519,7 @@
     </div>
 
     <div class="feedback-card" id="feedback-card">
-      <div class="feedback-label"><span class="speak-dot"></span>Mirror says</div>
+      <div class="feedback-label"><span class="speak-dot"></span>Glomi says</div>
       <div id="feedback-text"></div>
     </div>
 
@@ -625,9 +625,9 @@ document.getElementById('start-btn').addEventListener('click', async () => {
   document.getElementById('loading-screen').classList.remove('hidden');
 
   const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}".
-They have these products available: ${state.products ? state.products : "(none listed — assume a basic beginner kit: moisturizer, concealer, mascara, tinted lip balm)"}.
+They have these products available: ${state.products ? state.products : "(none listed — assume a complete basic beginner kit: moisturizer, primer, concealer, foundation, blush, mascara, brow gel, tinted lip balm, setting spray)"}.
 
-Create an ordered list of 4 to 6 short makeup application steps using only products they have. For each step give:
+Create a complete, ordered makeup routine covering every step that would generally apply for this look — skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, and setting — using their listed products wherever they fit. If a typical step has no matching product listed, still include that step and name a general product type for it. This is usually 6 to 10 steps; use fewer only if the occasion genuinely calls for a very minimal look. For each step give:
 - "title": 3-5 words
 - "instructions": one encouraging, beginner-friendly sentence on how to do it
 - "product": the product used for that step
@@ -672,8 +672,12 @@ document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 async function startCamera(){
   try{
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    document.getElementById('video').srcObject = state.stream;
+    const video = document.getElementById('video');
+    video.srcObject = state.stream;
     document.getElementById('mirror-placeholder').classList.add('hidden');
+    if (video.readyState < 2) {
+      await new Promise(resolve => { video.onloadedmetadata = resolve; });
+    }
   }catch(err){
     document.getElementById('mirror-placeholder').querySelector('span').textContent =
       "Camera access was blocked — allow it in your browser settings to try the live guide.";
@@ -811,12 +815,7 @@ function speak(text){
   window.speechSynthesis.speak(utter);
 }
 
-document.getElementById('check-btn').addEventListener('click', async () => {
-  if (!state.stream) {
-    document.getElementById('setup-error').textContent = '';
-    startCamera();
-    return;
-  }
+async function checkProgress(){
   const btn = document.getElementById('check-btn');
   const mirrorWrap = document.getElementById('mirror-wrap');
   const feedbackCard = document.getElementById('feedback-card');
@@ -848,6 +847,14 @@ Look at the photo and give brief, warm, specific spoken feedback — max 2 short
     btn.textContent = '✨ Check my progress';
     mirrorWrap.classList.remove('processing');
   }
+}
+
+document.getElementById('check-btn').addEventListener('click', async () => {
+  if (!state.stream) {
+    await startCamera();
+    if (!state.stream) return;
+  }
+  await checkProgress();
 });
 </script>
 

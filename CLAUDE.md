@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Mirror" is a single-page prototype for a live AI makeup coach. A user picks an occasion and lists (or photographs) their products, Claude generates a step-by-step routine, and then a camera-based "live" screen lets them ask Claude to look at a captured frame and give spoken feedback per step.
+"Glomi" is a single-page prototype for a live AI makeup coach. A user picks an occasion and lists (or photographs) their products, Claude generates a step-by-step routine, and then a camera-based "live" screen lets them ask Claude to look at a captured frame and give spoken feedback per step.
 
 The whole repo is two files plus a setup README:
 - `index.html` — the entire frontend: markup, CSS, and vanilla JS all inline in one file. No framework, no bundler, no build step.
@@ -32,6 +32,6 @@ There is no `package.json`, no dependency manifest, and no test/lint/build tooli
 ## Conventions
 
 - Keep everything in `index.html` unless a change specifically needs new server-side logic — this project intentionally has no build step, and splitting JS/CSS into separate files would require introducing tooling that doesn't exist yet.
-- CSS uses custom properties defined once on `:root` (colors, radius) — reuse those variables (`--bg`, `--surface`, `--coral`, `--gold`, `--text`, `--muted`, `--good`) rather than hardcoding new colors.
+- CSS uses custom properties defined once on `:root` (colors, radius) — reuse those variables (`--bg`, `--surface`, `--pink`, `--black`, `--text`, `--muted`, `--good`) rather than hardcoding new colors.
 - All Claude prompts request a specific, strict output contract (plain text for coaching feedback, fenced-free JSON for step generation) and the client code parses that contract directly — if you change a prompt's expected output shape, update the corresponding parsing code (`stripFences`/`JSON.parse` for steps, plain `.trim()` for feedback text) in the same change.
 - `api/claude.js` is intentionally a dumb passthrough (no prompt logic, no validation beyond method/error checks) — put all prompt engineering in `index.html`, not in the serverless function.
