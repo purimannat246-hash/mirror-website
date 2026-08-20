@@ -171,6 +171,23 @@
     transform:rotate(-1.6deg);
     box-shadow:3px 3px 0 var(--ink);
   }
+  .occasion-other{
+    width:100%;
+    background:var(--surface);
+    border:2px solid var(--line);
+    border-radius:12px;
+    color:var(--ink);
+    font-family:'Karla', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:12px 14px;
+    outline:none;
+    margin:-14px 0 28px;
+    box-shadow:3px 3px 0 rgba(0,0,0,0.6);
+  }
+  .occasion-other::placeholder{ color:var(--muted); font-weight:500; }
+  .occasion-other:focus{ border-color:var(--pink); }
+
   .products-box{
     background:var(--surface);
     border:2px solid var(--line);
@@ -828,10 +845,11 @@
         <div class="chip" data-occasion="Everyday"><span class="chip-icon">☀️</span>Everyday</div>
         <div class="chip" data-occasion="Other"><span class="chip-icon">✨</span>Other</div>
       </div>
+      <input class="occasion-other hidden" id="occasion-other-input" type="text" maxlength="60" placeholder="Tell me the occasion — e.g. prom, photoshoot, wedding guest">
 
       <span class="field-label">Your products</span>
       <div class="products-box">
-        <textarea class="products-input" id="products-input" placeholder="e.g. concealer, mascara, tinted lip balm, brown eyeshadow — separate with commas"></textarea>
+        <textarea class="products-input" id="products-input" maxlength="500" placeholder="e.g. concealer, mascara, tinted lip balm, brown eyeshadow — separate with commas"></textarea>
         <div class="scan-row">
           <label class="scan-btn" id="scan-label">
             📷 Scan a photo of your products
@@ -935,9 +953,9 @@
       </div>
 
       <div class="live-actions">
-        <button class="nav-btn" id="prev-btn">‹</button>
+        <button class="nav-btn" id="prev-btn" aria-label="Previous step">‹</button>
         <button class="check-btn" id="check-btn">✨ Check my progress</button>
-        <button class="nav-btn" id="next-btn">›</button>
+        <button class="nav-btn" id="next-btn" aria-label="Next step">›</button>
       </div>
     </div>
 
@@ -989,11 +1007,11 @@
       </div>
       <div class="acct-field">
         <span class="field-label">Name</span>
-        <input class="acct-input" id="acct-name-input" type="text" placeholder="Your name">
+        <input class="acct-input" id="acct-name-input" type="text" maxlength="60" placeholder="Your name">
       </div>
       <div class="acct-field">
         <span class="field-label">Email</span>
-        <input class="acct-input" id="acct-email-input" type="email" placeholder="you@email.com">
+        <input class="acct-input" id="acct-email-input" type="email" maxlength="100" placeholder="you@email.com">
       </div>
     </div>
 
@@ -1026,7 +1044,7 @@
         <button class="star-input" data-star="4">☆</button>
         <button class="star-input" data-star="5">☆</button>
       </div>
-      <textarea class="review-textarea" id="review-input" placeholder="What do you think so far? (optional)"></textarea>
+      <textarea class="review-textarea" id="review-input" maxlength="400" placeholder="What do you think so far? (optional)"></textarea>
       <button class="review-submit" id="review-submit-btn">Submit review</button>
       <div id="acct-reviews-list" style="margin-top:14px;"></div>
     </div>
@@ -1046,11 +1064,11 @@
   <div class="chat-card">
     <div class="chat-header">
       <div class="chat-header-title"><span class="brand-dot"></span>Ask Glomi</div>
-      <button class="chat-close" id="chat-close">✕</button>
+      <button class="chat-close" id="chat-close" aria-label="Close">✕</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-input-row">
-      <input class="chat-input" id="chat-input" type="text" placeholder="Ask about a product, a look, your skin…">
+      <input class="chat-input" id="chat-input" type="text" maxlength="300" placeholder="Ask about a product, a look, your skin…">
       <button class="chat-send" id="chat-send">➤</button>
     </div>
   </div>
@@ -1201,17 +1219,22 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', syncChatOverlayHeight);
 }
 
+function closeChatOverlay(){
+  const overlay = document.getElementById('chat-overlay');
+  overlay.classList.add('hidden');
+  overlay.style.height = '';
+  overlay.style.transform = '';
+  document.getElementById('bg-stickers').classList.remove('hidden');
+}
 document.getElementById('chat-fab').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.remove('hidden');
   document.getElementById('bg-stickers').classList.add('hidden');
   renderChatMessages();
   syncChatOverlayHeight();
 });
-document.getElementById('chat-close').addEventListener('click', () => {
-  document.getElementById('chat-overlay').classList.add('hidden');
-  document.getElementById('chat-overlay').style.height = '';
-  document.getElementById('chat-overlay').style.transform = '';
-  document.getElementById('bg-stickers').classList.remove('hidden');
+document.getElementById('chat-close').addEventListener('click', closeChatOverlay);
+document.getElementById('chat-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'chat-overlay') closeChatOverlay();
 });
 
 async function sendChatMessage(){
@@ -1318,7 +1341,7 @@ function openLookDetail(lookId){
   const isSaved = favorites.includes(look.id);
   overlay.innerHTML = `
     <div class="look-detail-card">
-      <button class="look-detail-close" id="look-detail-close">✕</button>
+      <button class="look-detail-close" id="look-detail-close" aria-label="Close">✕</button>
       <div class="look-art ${look.art} detail"><span>${look.icon}</span></div>
       <span class="look-tag">${look.tag}</span>
       <h2 class="look-name" style="font-size:22px;">${look.name}</h2>
@@ -1349,6 +1372,10 @@ function useLookAsGuide(look){
   state.occasion = look.tag;
   document.getElementById('products-input').value = look.products;
 }
+
+document.getElementById('look-detail-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'look-detail-overlay') e.target.classList.add('hidden');
+});
 
 // ---------- Curated skincare advice ----------
 const ADVICE = [
@@ -1417,7 +1444,7 @@ function renderAccountView(){
       return `<div class="acct-fav-row" data-look-id="${look.id}">
         <div class="look-art ${look.art} mini"><span>${look.icon}</span></div>
         <div class="acct-fav-info"><b>${look.name}</b><span>${look.tag}</span></div>
-        <button class="acct-remove" data-look-id="${look.id}">✕</button>
+        <button class="acct-remove" data-look-id="${look.id}" aria-label="Remove">✕</button>
       </div>`;
     }).join('');
     favWrap.querySelectorAll('.acct-fav-row').forEach(row => {
@@ -1439,11 +1466,11 @@ function renderAccountView(){
     routinesWrap.innerHTML = routines.map(r => `
       <div class="routine-item">
         <div class="routine-head" data-routine-id="${r.id}">
-          <div><b>${r.occasion}</b><span class="routine-date">${new Date(r.savedAt).toLocaleDateString()} · ${r.steps.length} steps</span></div>
-          <button class="acct-remove" data-remove-routine="${r.id}">✕</button>
+          <div><b>${escapeHtml(r.occasion)}</b><span class="routine-date">${new Date(r.savedAt).toLocaleDateString()} · ${r.steps.length} steps</span></div>
+          <button class="acct-remove" data-remove-routine="${r.id}" aria-label="Remove">✕</button>
         </div>
         <div class="routine-steps hidden" id="routine-steps-${r.id}">
-          ${r.steps.map((s,i) => `<div class="routine-step"><b>${i+1}. ${s.title}</b><span>${s.instructions}</span></div>`).join('')}
+          ${r.steps.map((s,i) => `<div class="routine-step"><b>${i+1}. ${escapeHtml(s.title)}</b><span>${escapeHtml(s.instructions)}</span></div>`).join('')}
         </div>
       </div>
     `).join('');
@@ -1465,7 +1492,7 @@ function renderAccountView(){
   const reviews = getReviews();
   const reviewsWrap = document.getElementById('acct-reviews-list');
   reviewsWrap.innerHTML = reviews.length
-    ? reviews.map(rv => `<div class="review-item"><span class="review-stars">${'★'.repeat(rv.rating)}${'☆'.repeat(5-rv.rating)}</span><p>${rv.comment}</p><span class="review-date">${new Date(rv.date).toLocaleDateString()}</span></div>`).join('')
+    ? reviews.map(rv => `<div class="review-item"><span class="review-stars">${'★'.repeat(rv.rating)}${'☆'.repeat(5-rv.rating)}</span><p>${escapeHtml(rv.comment)}</p><span class="review-date">${new Date(rv.date).toLocaleDateString()}</span></div>`).join('')
     : `<p class="acct-empty">No reviews yet — be the first to rate Glomi.</p>`;
 }
 
@@ -1535,8 +1562,23 @@ function setupChipGroup(containerId, onSelect){
   });
 }
 
-setupChipGroup('occasion-chips', (val) => { state.occasion = val; });
+setupChipGroup('occasion-chips', (val) => {
+  const otherInput = document.getElementById('occasion-other-input');
+  if (val === 'Other') {
+    otherInput.classList.remove('hidden');
+    otherInput.focus();
+    state.occasion = otherInput.value.trim() || 'Other';
+  } else {
+    otherInput.classList.add('hidden');
+    state.occasion = val;
+  }
+});
 document.querySelector('.chip[data-occasion="School"]').classList.add('active');
+document.getElementById('occasion-other-input').addEventListener('input', (e) => {
+  if (document.querySelector('#occasion-chips .chip[data-occasion="Other"]').classList.contains('active')) {
+    state.occasion = e.target.value.trim() || 'Other';
+  }
+});
 
 const quiz = { skinType:'', skinTone:'', concern:'', budget:'' };
 setupChipGroup('quiz-skin-type', v => { quiz.skinType = v; });
@@ -1766,7 +1808,7 @@ function renderFaceDiagram(step){
     requestAnimationFrame(() => { c.style.opacity = '1'; });
   });
   document.getElementById('diagram-copy').innerHTML =
-    `<b>${step.product || 'This product'}</b><br>${step.diagramNote || 'Follow the instructions above.'}`;
+    `<b>${escapeHtml(step.product || 'This product')}</b><br>${escapeHtml(step.diagramNote || 'Follow the instructions above.')}`;
 }
 
 // ---------- Read steps aloud ----------
