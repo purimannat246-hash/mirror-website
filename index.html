@@ -34,7 +34,7 @@
   .app{
     max-width:480px;
     margin:0 auto;
-    padding:28px 20px 60px;
+    padding:28px 20px 108px;
     min-height:100vh;
   }
   /* ---------- header ---------- */
@@ -68,7 +68,7 @@
     padding:6px 10px;
     border-radius:8px;
   }
-  /* ---------- setup screen ---------- */
+  /* ---------- shared setup-style bits (reused by Looks/Account headers) ---------- */
   .eyebrow{
     font-family:'IBM Plex Mono', monospace;
     text-transform:uppercase;
@@ -453,7 +453,7 @@
   }
   .nav-btn:disabled{ opacity:0.3; cursor:not-allowed; }
 
-  .done-screen{ text-align:center; padding:60px 0; }
+  .done-screen{ text-align:center; padding:60px 0 0; }
   .done-screen .eyebrow{ margin-left:auto; margin-right:auto; }
   .done-screen .headline{ font-size:27px; }
   .done-screen .sub{ max-width:28ch; margin-left:auto; margin-right:auto; }
@@ -483,6 +483,192 @@
     margin-top:10px;
   }
   .hidden{ display:none !important; }
+
+  /* ---------- tab bar ---------- */
+  .tabbar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:40;
+    display:flex;
+    max-width:480px;
+    margin:0 auto;
+    background:var(--surface);
+    border-top:2px solid var(--line);
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    gap:6px;
+  }
+  .tab-btn{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:6px 4px;
+    border-radius:10px;
+  }
+  .tab-icon{ font-size:19px; }
+  .tab-label{ font-family:'Karla', sans-serif; font-size:10.5px; font-weight:700; }
+  .tab-btn.active{ color:var(--pink); }
+
+  /* ---------- looks gallery ---------- */
+  .looks-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .look-card{
+    background:var(--surface);
+    border:2px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    box-shadow:4px 4px 0 rgba(0,0,0,0.6);
+  }
+  .look-art{
+    position:relative;
+    height:96px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    border-bottom:2px solid var(--line);
+  }
+  .look-art.detail{ height:130px; border-radius:14px; border:2px solid var(--line); margin-bottom:14px; font-size:44px; }
+  .look-art.mini{ height:auto; width:52px; aspect-ratio:1/1; border-radius:10px; border:2px solid var(--line); font-size:20px; flex-shrink:0; }
+  .look-art.bold-glam{ background:linear-gradient(150deg, #FF17C4, #4A0033); }
+  .look-art.glass-skin{ background:linear-gradient(150deg, #FFD3EC, #F2A6C8); }
+  .look-art.clean-girl{ background:linear-gradient(150deg, #E9E4E7, #A99BA8); }
+  .look-art.smoky-night{ background:linear-gradient(150deg, #4A1240, #050505); }
+  .look-art.soft-romantic{ background:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
+  .look-art.editorial-pop{ background:linear-gradient(150deg, #FF17C4, #FF8A00); }
+  .look-save{
+    position:absolute; top:8px; right:8px;
+    width:28px; height:28px; border-radius:50%;
+    background:rgba(0,0,0,0.5); border:1.5px solid var(--line);
+    font-size:13px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .look-body{ padding:12px; }
+  .look-tag{
+    font-family:'IBM Plex Mono', monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
+    color:#000; background:var(--pink); display:inline-block; padding:3px 7px; border-radius:5px; margin-bottom:7px;
+  }
+  .look-name{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:14px; margin:0 0 5px; }
+  .look-desc{
+    font-size:11px; color:var(--muted); font-weight:500; line-height:1.4; margin:0;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+
+  .look-detail-overlay{
+    position:fixed; inset:0; z-index:60;
+    background:rgba(0,0,0,0.86);
+    display:flex; align-items:flex-end;
+  }
+  .look-detail-overlay.hidden{ display:none; }
+  .look-detail-card{
+    width:100%; max-width:480px; margin:0 auto;
+    background:var(--surface);
+    border-top:2px solid var(--line);
+    border-radius:24px 24px 0 0;
+    padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    position:relative;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .look-detail-close{
+    position:absolute; top:16px; right:16px;
+    width:30px; height:30px; border-radius:50%;
+    background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
+    font-size:13px; cursor:pointer;
+  }
+  .look-products{ font-size:13px; color:var(--muted); font-weight:500; line-height:1.5; margin:0 0 20px; }
+
+  /* ---------- account ---------- */
+  .acct-card{
+    background:var(--surface);
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:4px 4px 0 rgba(0,0,0,0.6);
+  }
+  .acct-header{ display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .acct-avatar{
+    width:48px; height:48px; border-radius:50%;
+    background:var(--pink); color:#000;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:18px;
+    border:2px solid var(--line); flex-shrink:0;
+  }
+  .acct-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; margin:0 0 3px; }
+  .acct-subtitle{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+  .acct-field{ margin-top:14px; }
+  .acct-input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid var(--line);
+    color:var(--ink);
+    font-family:'Karla', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:8px 2px;
+    outline:none;
+  }
+  .acct-input:focus{ border-bottom-color:var(--pink); }
+  .acct-input::placeholder{ color:var(--muted); font-weight:500; }
+
+  .sub-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
+  .sub-note{ font-size:11px; color:var(--pink); font-weight:600; margin-top:8px; min-height:14px; }
+  .acct-manage-btn{
+    background:var(--surface-2); color:var(--ink); border:2px solid var(--line);
+    font-family:'Karla', sans-serif; font-weight:700; font-size:11.5px;
+    padding:9px 12px; border-radius:10px; cursor:pointer;
+  }
+
+  .acct-empty{ font-size:12.5px; color:var(--muted); font-weight:500; margin:4px 0 0; }
+  .acct-fav-row{
+    display:flex; align-items:center; gap:10px; padding:8px 0;
+    border-bottom:1px solid var(--surface-2); cursor:pointer;
+  }
+  .acct-fav-row:last-child{ border-bottom:none; }
+  .acct-fav-info{ flex:1; display:flex; flex-direction:column; gap:2px; font-size:12.5px; font-weight:600; }
+  .acct-fav-info span{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; font-weight:500; }
+  .acct-remove{
+    background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; padding:6px;
+  }
+
+  .routine-item{ border-bottom:1px solid var(--surface-2); padding:4px 0; }
+  .routine-item:last-child{ border-bottom:none; }
+  .routine-head{ display:flex; align-items:center; justify-content:space-between; padding:8px 0; cursor:pointer; }
+  .routine-head b{ font-family:'Unbounded', sans-serif; font-size:13px; display:block; margin-bottom:2px; }
+  .routine-date{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; }
+  .routine-steps{ padding:2px 0 10px; display:flex; flex-direction:column; gap:8px; }
+  .routine-step{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.4; }
+  .routine-step b{ color:var(--ink); font-family:'Karla', sans-serif; display:block; margin-bottom:1px; }
+
+  .stars-input{ display:flex; gap:4px; margin:10px 0; }
+  .star-input{ background:none; border:none; font-size:22px; color:var(--muted); cursor:pointer; padding:2px; }
+  .star-input.filled{ color:var(--pink); }
+  .review-textarea{
+    width:100%; background:var(--surface-2); border:2px solid var(--line); border-radius:10px;
+    color:var(--ink); font-family:'Karla', sans-serif; font-size:13px; padding:10px; resize:none; min-height:52px;
+    outline:none; margin-bottom:10px;
+  }
+  .review-submit{
+    background:var(--pink); color:#000; border:2px solid var(--line);
+    font-family:'Unbounded', sans-serif; font-weight:700; font-size:12.5px;
+    padding:11px; border-radius:10px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,0,0,0.6);
+  }
+  .review-item{ padding:10px 0; border-bottom:1px solid var(--surface-2); }
+  .review-item:last-child{ border-bottom:none; }
+  .review-stars{ color:var(--pink); font-size:13px; letter-spacing:1px; }
+  .review-item p{ font-size:12.5px; color:var(--ink); font-weight:500; margin:5px 0; line-height:1.4; }
+  .review-date{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; }
 </style>
 </head>
 <body>
@@ -494,107 +680,187 @@
     <div class="price-pill">from €5/mo · pay per look</div>
   </div>
 
-  <!-- SETUP SCREEN -->
-  <div id="setup-screen">
-    <span class="eyebrow">Prototype · core feature</span>
-    <h1 class="headline">Tell me what you're getting ready for.</h1>
-    <p class="sub">Pick the occasion, tell me what's in your bag, and I'll coach you through it live — camera on, step by step.</p>
+  <!-- ================= HOME TAB ================= -->
+  <div id="home-view">
 
-    <span class="field-label">Occasion</span>
-    <div class="chips" id="occasion-chips">
-      <div class="chip" data-occasion="School"><span class="chip-icon">🎒</span>School</div>
-      <div class="chip" data-occasion="Date"><span class="chip-icon">🌙</span>Date</div>
-      <div class="chip" data-occasion="Party"><span class="chip-icon">🎉</span>Party</div>
-      <div class="chip" data-occasion="Everyday"><span class="chip-icon">☀️</span>Everyday</div>
-      <div class="chip" data-occasion="Other"><span class="chip-icon">✨</span>Other</div>
-    </div>
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen">
+      <span class="eyebrow">Prototype · core feature</span>
+      <h1 class="headline">Tell me what you're getting ready for.</h1>
+      <p class="sub">Pick the occasion, tell me what's in your bag, and I'll coach you through it live — camera on, step by step.</p>
 
-    <span class="field-label">Your products</span>
-    <div class="products-box">
-      <textarea class="products-input" id="products-input" placeholder="e.g. concealer, mascara, tinted lip balm, brown eyeshadow — separate with commas"></textarea>
-      <div class="scan-row">
-        <label class="scan-btn" id="scan-label">
-          📷 Scan a photo of your products
-          <input type="file" accept="image/*" id="scan-input" style="display:none;">
-        </label>
-        <span class="scan-status" id="scan-status"></span>
+      <span class="field-label">Occasion</span>
+      <div class="chips" id="occasion-chips">
+        <div class="chip" data-occasion="School"><span class="chip-icon">🎒</span>School</div>
+        <div class="chip" data-occasion="Date"><span class="chip-icon">🌙</span>Date</div>
+        <div class="chip" data-occasion="Party"><span class="chip-icon">🎉</span>Party</div>
+        <div class="chip" data-occasion="Everyday"><span class="chip-icon">☀️</span>Everyday</div>
+        <div class="chip" data-occasion="Other"><span class="chip-icon">✨</span>Other</div>
       </div>
-    </div>
 
-    <button class="primary-btn" id="start-btn">Start my live guide</button>
-    <p class="error-line" id="setup-error"></p>
-  </div>
-
-  <!-- LIVE SCREEN -->
-  <div id="live-screen" class="hidden">
-    <div class="live-header">
-      <button class="back-link" id="back-btn">← start over</button>
-      <span class="price-pill" id="occasion-pill">School</span>
-    </div>
-
-    <div class="step-track" id="step-track"></div>
-
-    <div class="mirror-wrap" id="mirror-wrap">
-      <div class="mirror">
-        <video id="video" autoplay playsinline muted></video>
-        <div class="mirror-placeholder" id="mirror-placeholder">
-          <span>Turn your camera on so I can see how it's going</span>
-          <button id="camera-btn">Enable camera</button>
+      <span class="field-label">Your products</span>
+      <div class="products-box">
+        <textarea class="products-input" id="products-input" placeholder="e.g. concealer, mascara, tinted lip balm, brown eyeshadow — separate with commas"></textarea>
+        <div class="scan-row">
+          <label class="scan-btn" id="scan-label">
+            📷 Scan a photo of your products
+            <input type="file" accept="image/*" id="scan-input" style="display:none;">
+          </label>
+          <span class="scan-status" id="scan-status"></span>
         </div>
       </div>
+
+      <button class="primary-btn" id="start-btn">Start my live guide</button>
+      <p class="error-line" id="setup-error"></p>
     </div>
 
-    <div class="step-card" id="step-card">
-      <div class="step-count" id="step-count">Step 1 of 5</div>
-      <h2 class="step-title" id="step-title">—</h2>
-      <p class="step-instructions" id="step-instructions">—</p>
-      <span class="step-product" id="step-product">—</span>
-      <button class="speak-toggle on" id="speak-toggle">🔊 Read steps aloud</button>
+    <!-- LIVE SCREEN -->
+    <div id="live-screen" class="hidden">
+      <div class="live-header">
+        <button class="back-link" id="back-btn">← start over</button>
+        <span class="price-pill" id="occasion-pill">School</span>
+      </div>
+
+      <div class="step-track" id="step-track"></div>
+
+      <div class="mirror-wrap" id="mirror-wrap">
+        <div class="mirror">
+          <video id="video" autoplay playsinline muted></video>
+          <div class="mirror-placeholder" id="mirror-placeholder">
+            <span>Turn your camera on so I can see how it's going</span>
+            <button id="camera-btn">Enable camera</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card" id="step-card">
+        <div class="step-count" id="step-count">Step 1 of 5</div>
+        <h2 class="step-title" id="step-title">—</h2>
+        <p class="step-instructions" id="step-instructions">—</p>
+        <span class="step-product" id="step-product">—</span>
+        <button class="speak-toggle on" id="speak-toggle">🔊 Read steps aloud</button>
+      </div>
+
+      <div class="diagram-card">
+        <svg viewBox="0 0 200 240" id="face-diagram">
+          <path class="diagram-face" d="M100,18 C58,18 40,54 40,100 C40,152 64,208 100,227 C136,208 160,152 160,100 C160,54 142,18 100,18 Z"/>
+          <path class="diagram-face" d="M66,86 Q74,78 84,83" />
+          <path class="diagram-face" d="M116,83 Q126,78 134,86" />
+          <path class="diagram-face" d="M68,98 Q76,93 84,97 Q76,102 68,98 Z" />
+          <path class="diagram-face" d="M116,97 Q124,93 132,98 Q124,102 116,97 Z" />
+          <path class="diagram-face" d="M99,112 L93,136 L102,139" />
+          <path class="diagram-face" d="M76,167 Q100,160 124,167" />
+          <path class="diagram-face" d="M78,169 Q100,182 122,169" />
+          <g id="marker-group"></g>
+        </svg>
+        <div class="diagram-copy" id="diagram-copy">Where to put it goes here.</div>
+      </div>
+
+      <div class="feedback-card" id="feedback-card">
+        <div class="feedback-label"><span class="speak-dot"></span>Glomi says</div>
+        <div id="feedback-text"></div>
+      </div>
+
+      <div class="live-actions">
+        <button class="nav-btn" id="prev-btn">‹</button>
+        <button class="check-btn" id="check-btn">✨ Check my progress</button>
+        <button class="nav-btn" id="next-btn">›</button>
+      </div>
     </div>
 
-    <div class="diagram-card">
-      <svg viewBox="0 0 200 240" id="face-diagram">
-        <path class="diagram-face" d="M100,18 C58,18 40,54 40,100 C40,152 64,208 100,227 C136,208 160,152 160,100 C160,54 142,18 100,18 Z"/>
-        <path class="diagram-face" d="M66,86 Q74,78 84,83" />
-        <path class="diagram-face" d="M116,83 Q126,78 134,86" />
-        <path class="diagram-face" d="M68,98 Q76,93 84,97 Q76,102 68,98 Z" />
-        <path class="diagram-face" d="M116,97 Q124,93 132,98 Q124,102 116,97 Z" />
-        <path class="diagram-face" d="M99,112 L93,136 L102,139" />
-        <path class="diagram-face" d="M76,167 Q100,160 124,167" />
-        <path class="diagram-face" d="M78,169 Q100,182 122,169" />
-        <g id="marker-group"></g>
-      </svg>
-      <div class="diagram-copy" id="diagram-copy">Where to put it goes here.</div>
+    <!-- LOADING (step generation) -->
+    <div id="loading-screen" class="hidden">
+      <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
     </div>
 
-    <div class="feedback-card" id="feedback-card">
-      <div class="feedback-label"><span class="speak-dot"></span>Glomi says</div>
-      <div id="feedback-text"></div>
+    <!-- DONE SCREEN -->
+    <div id="done-screen" class="hidden done-screen">
+      <span class="eyebrow">All done</span>
+      <h1 class="headline">You're ready. ✨</h1>
+      <p class="sub">That's the full look. Save it to your account, or start another.</p>
+      <button class="ghost-btn" id="save-look-btn">💾 Save this look</button>
+      <button class="ghost-btn" id="restart-btn">Start another look</button>
     </div>
 
-    <div class="live-actions">
-      <button class="nav-btn" id="prev-btn">‹</button>
-      <button class="check-btn" id="check-btn">✨ Check my progress</button>
-      <button class="nav-btn" id="next-btn">›</button>
-    </div>
   </div>
 
-  <!-- LOADING (step generation) -->
-  <div id="loading-screen" class="hidden">
-    <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
+  <!-- ================= LOOKS TAB ================= -->
+  <div id="looks-view" class="hidden">
+    <span class="eyebrow">Get inspired</span>
+    <h1 class="headline">Browse looks.</h1>
+    <p class="sub">Tap a look to see how it's built, or heart it to save for later.</p>
+    <div class="looks-grid" id="looks-grid"></div>
   </div>
 
-  <!-- DONE SCREEN -->
-  <div id="done-screen" class="hidden done-screen">
-    <span class="eyebrow">All done</span>
-    <h1 class="headline">You're ready. ✨</h1>
-    <p class="sub">That's the full look. In the real app this is also where you'd rate the guide and save your routine.</p>
-    <button class="ghost-btn" id="restart-btn">Start another look</button>
+  <!-- ================= ACCOUNT TAB ================= -->
+  <div id="account-view" class="hidden">
+    <span class="eyebrow">Your account</span>
+    <h1 class="headline">Account.</h1>
+
+    <div class="acct-card">
+      <div class="acct-header">
+        <div class="acct-avatar" id="acct-avatar">G</div>
+        <div>
+          <p class="acct-title">Profile</p>
+          <p class="acct-subtitle">Stored on this device</p>
+        </div>
+      </div>
+      <div class="acct-field">
+        <span class="field-label">Name</span>
+        <input class="acct-input" id="acct-name-input" type="text" placeholder="Your name">
+      </div>
+      <div class="acct-field">
+        <span class="field-label">Email</span>
+        <input class="acct-input" id="acct-email-input" type="email" placeholder="you@email.com">
+      </div>
+    </div>
+
+    <div class="acct-card">
+      <p class="acct-title">Subscription</p>
+      <div class="sub-row">
+        <span class="price-pill">from €5/mo · pay per look</span>
+        <button class="acct-manage-btn" id="manage-sub-btn">Manage</button>
+      </div>
+      <p class="sub-note" id="sub-note"></p>
+    </div>
+
+    <div class="acct-card">
+      <p class="acct-title">Favourite looks</p>
+      <div id="acct-favorites" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="acct-card">
+      <p class="acct-title">Your guides</p>
+      <div id="acct-routines" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="acct-card">
+      <p class="acct-title">Reviews</p>
+      <p class="acct-subtitle" style="margin:6px 0 4px;">Rate your experience with Glomi</p>
+      <div class="stars-input" id="stars-input">
+        <button class="star-input" data-star="1">☆</button>
+        <button class="star-input" data-star="2">☆</button>
+        <button class="star-input" data-star="3">☆</button>
+        <button class="star-input" data-star="4">☆</button>
+        <button class="star-input" data-star="5">☆</button>
+      </div>
+      <textarea class="review-textarea" id="review-input" placeholder="What do you think so far? (optional)"></textarea>
+      <button class="review-submit" id="review-submit-btn">Submit review</button>
+      <div id="acct-reviews-list" style="margin-top:14px;"></div>
+    </div>
   </div>
 
 </div>
 
 <canvas id="canvas" style="display:none;"></canvas>
+
+<div class="look-detail-overlay hidden" id="look-detail-overlay"></div>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
+  <button class="tab-btn" data-tab="looks"><span class="tab-icon">💫</span><span class="tab-label">Looks</span></button>
+  <button class="tab-btn" data-tab="account"><span class="tab-icon">👤</span><span class="tab-label">Account</span></button>
+</nav>
 
 <script>
 const state = {
@@ -622,6 +888,245 @@ async function callClaude(content) {
 
 function stripFences(s){
   return s.replace(/```json/g, "").replace(/```/g, "").trim();
+}
+
+// ---------- Local storage helpers (account/favourites/routines/reviews live on this device only) ----------
+function loadJSON(key, fallback){
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
+}
+function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+function getAccount(){ return loadJSON('glomi_account', { name:'', email:'' }); }
+function setAccount(a){ saveJSON('glomi_account', a); }
+function getFavorites(){ return loadJSON('glomi_favorites', []); }
+function setFavorites(f){ saveJSON('glomi_favorites', f); }
+function getRoutines(){ return loadJSON('glomi_routines', []); }
+function setRoutines(r){ saveJSON('glomi_routines', r); }
+function getReviews(){ return loadJSON('glomi_reviews', []); }
+function setReviews(r){ saveJSON('glomi_reviews', r); }
+
+// ---------- Curated look gallery ----------
+const LOOKS = [
+  { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam', icon:'💋',
+    desc:'Winged liner, a bold lip, and glow that reads from across the room.',
+    products:'liquid eyeliner, bold red lipstick, highlighter, mascara' },
+  { id:'glass-skin', name:'Korean Glass Skin', tag:'Everyday', art:'glass-skin', icon:'🍯',
+    desc:'Dewy, translucent skin with soft gradient lips — barely-there but glowing.',
+    products:'hydrating primer, cushion foundation, cream blush, tinted lip balm' },
+  { id:'clean-girl', name:'Clean Girl', tag:'School', art:'clean-girl', icon:'🤍',
+    desc:'Minimal, skin-first, glossy — five minutes and out the door.',
+    products:'concealer, brow gel, lip oil, mascara' },
+  { id:'smoky-night', name:'Smoky Night Out', tag:'Party', art:'smoky-night', icon:'🖤',
+    desc:'Dark, blended smoky eyes with a contoured, sculpted finish.',
+    products:'dark eyeshadow palette, eyeliner, bronzer, nude lipstick' },
+  { id:'soft-romantic', name:'Soft Romantic', tag:'Date', art:'soft-romantic', icon:'🌸',
+    desc:"Flushed cheeks, soft pink lids, a lip that looks bitten not painted.",
+    products:'pink blush, shimmer eyeshadow, tinted lip balm, mascara' },
+  { id:'editorial-pop', name:'Editorial Pop', tag:'Other', art:'editorial-pop', icon:'🎨',
+    desc:'Graphic liner or a bold color moment — makeup as a statement.',
+    products:'colored eyeliner, bold eyeshadow, setting spray' },
+];
+
+function renderLooksGrid(){
+  const grid = document.getElementById('looks-grid');
+  const favorites = getFavorites();
+  grid.innerHTML = LOOKS.map(look => `
+    <div class="look-card" data-look-id="${look.id}">
+      <div class="look-art ${look.art}">
+        <span>${look.icon}</span>
+        <button class="look-save" data-look-id="${look.id}" aria-label="Save look">${favorites.includes(look.id) ? '💖' : '🤍'}</button>
+      </div>
+      <div class="look-body">
+        <span class="look-tag">${look.tag}</span>
+        <h3 class="look-name">${look.name}</h3>
+        <p class="look-desc">${look.desc}</p>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.look-save').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(btn.dataset.lookId);
+    });
+  });
+  grid.querySelectorAll('.look-card').forEach(card => {
+    card.addEventListener('click', () => openLookDetail(card.dataset.lookId));
+  });
+}
+
+function toggleFavorite(lookId){
+  let favorites = getFavorites();
+  favorites = favorites.includes(lookId) ? favorites.filter(id => id !== lookId) : [...favorites, lookId];
+  setFavorites(favorites);
+  renderLooksGrid();
+  if (!document.getElementById('account-view').classList.contains('hidden')) renderAccountView();
+}
+
+function openLookDetail(lookId){
+  const look = LOOKS.find(l => l.id === lookId);
+  if (!look) return;
+  const overlay = document.getElementById('look-detail-overlay');
+  const favorites = getFavorites();
+  const isSaved = favorites.includes(look.id);
+  overlay.innerHTML = `
+    <div class="look-detail-card">
+      <button class="look-detail-close" id="look-detail-close">✕</button>
+      <div class="look-art ${look.art} detail"><span>${look.icon}</span></div>
+      <span class="look-tag">${look.tag}</span>
+      <h2 class="look-name" style="font-size:22px;">${look.name}</h2>
+      <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:16px;">${look.desc}</p>
+      <span class="field-label">Suggested products</span>
+      <p class="look-products">${look.products}</p>
+      <button class="primary-btn" id="use-look-btn">Use this look → start guide</button>
+      <button class="ghost-btn" id="fav-look-btn">${isSaved ? '💖 Saved to favourites' : '🤍 Save to favourites'}</button>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  document.getElementById('look-detail-close').addEventListener('click', () => overlay.classList.add('hidden'));
+  document.getElementById('use-look-btn').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    useLookAsGuide(look);
+  });
+  document.getElementById('fav-look-btn').addEventListener('click', () => {
+    toggleFavorite(look.id);
+    openLookDetail(look.id);
+  });
+}
+
+function useLookAsGuide(look){
+  switchTab('home');
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  const matchingChip = document.querySelector(`.chip[data-occasion="${look.tag}"]`);
+  if (matchingChip) matchingChip.classList.add('active');
+  state.occasion = look.tag;
+  document.getElementById('products-input').value = look.products;
+}
+
+// ---------- Account view ----------
+function renderAccountView(){
+  const account = getAccount();
+  document.getElementById('acct-name-input').value = account.name || '';
+  document.getElementById('acct-email-input').value = account.email || '';
+  document.getElementById('acct-avatar').textContent = (account.name || 'G').trim().charAt(0).toUpperCase() || 'G';
+
+  const favorites = getFavorites();
+  const favWrap = document.getElementById('acct-favorites');
+  if (!favorites.length){
+    favWrap.innerHTML = `<p class="acct-empty">Heart a look on the Looks tab to save it here.</p>`;
+  } else {
+    favWrap.innerHTML = favorites.map(id => {
+      const look = LOOKS.find(l => l.id === id);
+      if (!look) return '';
+      return `<div class="acct-fav-row" data-look-id="${look.id}">
+        <div class="look-art ${look.art} mini"><span>${look.icon}</span></div>
+        <div class="acct-fav-info"><b>${look.name}</b><span>${look.tag}</span></div>
+        <button class="acct-remove" data-look-id="${look.id}">✕</button>
+      </div>`;
+    }).join('');
+    favWrap.querySelectorAll('.acct-fav-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.classList.contains('acct-remove')) return;
+        openLookDetail(row.dataset.lookId);
+      });
+    });
+    favWrap.querySelectorAll('.acct-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.lookId); });
+    });
+  }
+
+  const routines = getRoutines();
+  const routinesWrap = document.getElementById('acct-routines');
+  if (!routines.length){
+    routinesWrap.innerHTML = `<p class="acct-empty">Finish a live guide and save it to see it here.</p>`;
+  } else {
+    routinesWrap.innerHTML = routines.map(r => `
+      <div class="routine-item">
+        <div class="routine-head" data-routine-id="${r.id}">
+          <div><b>${r.occasion}</b><span class="routine-date">${new Date(r.savedAt).toLocaleDateString()} · ${r.steps.length} steps</span></div>
+          <button class="acct-remove" data-remove-routine="${r.id}">✕</button>
+        </div>
+        <div class="routine-steps hidden" id="routine-steps-${r.id}">
+          ${r.steps.map((s,i) => `<div class="routine-step"><b>${i+1}. ${s.title}</b><span>${s.instructions}</span></div>`).join('')}
+        </div>
+      </div>
+    `).join('');
+    routinesWrap.querySelectorAll('.routine-head').forEach(head => {
+      head.addEventListener('click', (e) => {
+        if (e.target.dataset.removeRoutine) return;
+        document.getElementById(`routine-steps-${head.dataset.routineId}`).classList.toggle('hidden');
+      });
+    });
+    routinesWrap.querySelectorAll('[data-remove-routine]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setRoutines(getRoutines().filter(r => r.id !== btn.dataset.removeRoutine));
+        renderAccountView();
+      });
+    });
+  }
+
+  const reviews = getReviews();
+  const reviewsWrap = document.getElementById('acct-reviews-list');
+  reviewsWrap.innerHTML = reviews.length
+    ? reviews.map(rv => `<div class="review-item"><span class="review-stars">${'★'.repeat(rv.rating)}${'☆'.repeat(5-rv.rating)}</span><p>${rv.comment}</p><span class="review-date">${new Date(rv.date).toLocaleDateString()}</span></div>`).join('')
+    : `<p class="acct-empty">No reviews yet — be the first to rate Glomi.</p>`;
+}
+
+document.getElementById('acct-name-input').addEventListener('input', (e) => {
+  const account = getAccount(); account.name = e.target.value; setAccount(account);
+  document.getElementById('acct-avatar').textContent = (e.target.value.trim().charAt(0) || 'G').toUpperCase();
+});
+document.getElementById('acct-email-input').addEventListener('input', (e) => {
+  const account = getAccount(); account.email = e.target.value; setAccount(account);
+});
+document.getElementById('manage-sub-btn').addEventListener('click', () => {
+  document.getElementById('sub-note').textContent = "Billing isn't wired up in this prototype yet.";
+});
+
+let currentRating = 0;
+document.querySelectorAll('.star-input').forEach(star => {
+  star.addEventListener('click', () => {
+    currentRating = parseInt(star.dataset.star);
+    document.querySelectorAll('.star-input').forEach(s => {
+      const filled = parseInt(s.dataset.star) <= currentRating;
+      s.textContent = filled ? '★' : '☆';
+      s.classList.toggle('filled', filled);
+    });
+  });
+});
+document.getElementById('review-submit-btn').addEventListener('click', () => {
+  if (!currentRating) return;
+  const comment = document.getElementById('review-input').value.trim();
+  const reviews = getReviews();
+  reviews.unshift({ rating: currentRating, comment: comment || '(no comment)', date: new Date().toISOString() });
+  setReviews(reviews);
+  document.getElementById('review-input').value = '';
+  currentRating = 0;
+  document.querySelectorAll('.star-input').forEach(s => { s.textContent = '☆'; s.classList.remove('filled'); });
+  renderAccountView();
+});
+
+// ---------- Tab bar ----------
+const TAB_VIEWS = { home: 'home-view', looks: 'looks-view', account: 'account-view' };
+function switchTab(tab){
+  Object.entries(TAB_VIEWS).forEach(([key, id]) => {
+    document.getElementById(id).classList.toggle('hidden', key !== tab);
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  if (tab === 'looks') renderLooksGrid();
+  if (tab === 'account') renderAccountView();
+}
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+function setTabbarVisible(visible){
+  document.getElementById('tabbar').classList.toggle('hidden', !visible);
 }
 
 // ---------- Setup screen: occasion chips ----------
@@ -672,6 +1177,7 @@ document.getElementById('start-btn').addEventListener('click', async () => {
 
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('loading-screen').classList.remove('hidden');
+  setTabbarVisible(false);
 
   const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}".
 They have these products available: ${state.products ? state.products : "(none listed — assume a complete basic beginner kit: moisturizer, primer, concealer, foundation, blush, mascara, brow gel, tinted lip balm, setting spray)"}.
@@ -701,6 +1207,7 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
   } catch (err) {
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('setup-screen').classList.remove('hidden');
+    setTabbarVisible(true);
     errEl.textContent = "Something went wrong building your steps — try again.";
   }
 });
@@ -713,9 +1220,26 @@ function resetToSetup(){
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('feedback-card').classList.remove('show');
   document.getElementById('scan-status').textContent = '';
+  setTabbarVisible(true);
 }
 document.getElementById('back-btn').addEventListener('click', resetToSetup);
 document.getElementById('restart-btn').addEventListener('click', resetToSetup);
+
+// ---------- Save completed look ----------
+document.getElementById('save-look-btn').addEventListener('click', () => {
+  const routines = getRoutines();
+  routines.unshift({
+    id: 'r_' + Date.now(),
+    occasion: state.occasion,
+    products: state.products,
+    steps: state.steps,
+    savedAt: new Date().toISOString(),
+  });
+  setRoutines(routines);
+  const btn = document.getElementById('save-look-btn');
+  btn.textContent = 'Saved ✓';
+  btn.disabled = true;
+});
 
 // ---------- Camera ----------
 async function startCamera(){
@@ -851,6 +1375,10 @@ document.getElementById('next-btn').addEventListener('click', () => {
     document.getElementById('live-screen').classList.add('hidden');
     document.getElementById('done-screen').classList.remove('hidden');
     stopCamera();
+    setTabbarVisible(true);
+    const saveBtn = document.getElementById('save-look-btn');
+    saveBtn.textContent = '💾 Save this look';
+    saveBtn.disabled = false;
   }
 });
 
