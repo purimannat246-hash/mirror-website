@@ -31,7 +31,34 @@
     font-weight:700;
     letter-spacing:-0.01em;
   }
+
+  /* ---------- decorative background stickers ---------- */
+  .bg-stickers{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
+  }
+  .bg-sticker{
+    position:absolute;
+    font-size:34px;
+    opacity:0.16;
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,0.4));
+  }
+  .bg-sticker.s1{ top:6%; left:4%; transform:rotate(-18deg); font-size:40px; }
+  .bg-sticker.s2{ top:14%; right:5%; transform:rotate(14deg); }
+  .bg-sticker.s3{ top:48%; left:3%; transform:rotate(10deg); font-size:30px; }
+  .bg-sticker.s4{ top:62%; right:4%; transform:rotate(-12deg); font-size:38px; }
+  .bg-sticker.s5{ bottom:8%; left:6%; transform:rotate(-8deg); }
+  .bg-sticker.s6{ bottom:16%; right:6%; transform:rotate(16deg); font-size:32px; }
+  @media (max-width:640px){
+    .bg-stickers{ display:none; }
+  }
+
   .app{
+    position:relative;
+    z-index:1;
     max-width:480px;
     margin:0 auto;
     padding:28px 20px 108px;
@@ -42,7 +69,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom:28px;
+    margin-bottom:14px;
   }
   .brand-name{
     font-family:'Unbounded', sans-serif;
@@ -68,7 +95,16 @@
     padding:6px 10px;
     border-radius:8px;
   }
-  /* ---------- shared setup-style bits (reused by Looks/Account headers) ---------- */
+  .brand-quote{
+    font-family:'Karla', sans-serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--muted);
+    text-align:center;
+    margin:0 0 22px;
+  }
+  /* ---------- shared setup-style bits (reused by Looks/Advice/Account headers) ---------- */
   .eyebrow{
     font-family:'IBM Plex Mono', monospace;
     text-transform:uppercase;
@@ -208,6 +244,21 @@
     cursor:pointer;
     margin-top:10px;
   }
+
+  /* ---------- skin quiz (setup screen) ---------- */
+  .quiz-card{ margin-top:8px; }
+  .quiz-result{
+    background:var(--surface-2);
+    border:2px solid var(--pink);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-top:14px;
+    font-size:13px;
+    font-weight:500;
+    line-height:1.65;
+    white-space:pre-line;
+  }
+
   /* ---------- live screen ---------- */
   .live-header{
     display:flex;
@@ -511,7 +562,7 @@
     border-radius:10px;
   }
   .tab-icon{ font-size:19px; }
-  .tab-label{ font-family:'Karla', sans-serif; font-size:10.5px; font-weight:700; }
+  .tab-label{ font-family:'Karla', sans-serif; font-size:10px; font-weight:700; }
   .tab-btn.active{ color:var(--pink); }
 
   /* ---------- looks gallery ---------- */
@@ -587,7 +638,16 @@
   }
   .look-products{ font-size:13px; color:var(--muted); font-weight:500; line-height:1.5; margin:0 0 20px; }
 
-  /* ---------- account ---------- */
+  /* ---------- advice tab ---------- */
+  .advice-disclaimer{
+    font-size:11.5px;
+    color:var(--muted);
+    font-weight:500;
+    line-height:1.5;
+    margin-top:18px;
+  }
+
+  /* ---------- account (also reused by advice accordion) ---------- */
   .acct-card{
     background:var(--surface);
     border:2px solid var(--line);
@@ -648,7 +708,7 @@
   .routine-head b{ font-family:'Unbounded', sans-serif; font-size:13px; display:block; margin-bottom:2px; }
   .routine-date{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; }
   .routine-steps{ padding:2px 0 10px; display:flex; flex-direction:column; gap:8px; }
-  .routine-step{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.4; }
+  .routine-step{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.45; margin:0; }
   .routine-step b{ color:var(--ink); font-family:'Karla', sans-serif; display:block; margin-bottom:1px; }
 
   .stars-input{ display:flex; gap:4px; margin:10px 0; }
@@ -673,12 +733,22 @@
 </head>
 <body>
 
+<div class="bg-stickers" aria-hidden="true">
+  <span class="bg-sticker s1">💄</span>
+  <span class="bg-sticker s2">✨</span>
+  <span class="bg-sticker s3">💅</span>
+  <span class="bg-sticker s4">🖌️</span>
+  <span class="bg-sticker s5">🪞</span>
+  <span class="bg-sticker s6">🤍</span>
+</div>
+
 <div class="app">
 
   <div class="brand">
     <div class="brand-name"><span class="brand-dot"></span>glomi</div>
     <div class="price-pill">from €5/mo · pay per look</div>
   </div>
+  <p class="brand-quote" id="brand-quote"></p>
 
   <!-- ================= HOME TAB ================= -->
   <div id="home-view">
@@ -712,6 +782,48 @@
 
       <button class="primary-btn" id="start-btn">Start my live guide</button>
       <p class="error-line" id="setup-error"></p>
+
+      <!-- SKIN QUIZ -->
+      <div class="acct-card quiz-card">
+        <p class="acct-title">Not sure what to get?</p>
+        <p class="acct-subtitle" style="margin:6px 0 14px;">Take our 30-second skin quiz for picks and brand ideas</p>
+
+        <span class="field-label">Skin type</span>
+        <div class="chips" id="quiz-skin-type">
+          <div class="chip" data-value="Oily"><span class="chip-icon">💧</span>Oily</div>
+          <div class="chip" data-value="Dry"><span class="chip-icon">🍂</span>Dry</div>
+          <div class="chip" data-value="Combination"><span class="chip-icon">🌗</span>Combo</div>
+          <div class="chip" data-value="Normal"><span class="chip-icon">🌱</span>Normal</div>
+        </div>
+
+        <span class="field-label">Skin tone</span>
+        <div class="chips" id="quiz-skin-tone">
+          <div class="chip" data-value="Fair">Fair</div>
+          <div class="chip" data-value="Light">Light</div>
+          <div class="chip" data-value="Medium">Medium</div>
+          <div class="chip" data-value="Tan">Tan</div>
+          <div class="chip" data-value="Deep">Deep</div>
+        </div>
+
+        <span class="field-label">Main concern</span>
+        <div class="chips" id="quiz-concern">
+          <div class="chip" data-value="Acne &amp; blemishes"><span class="chip-icon">🎯</span>Acne</div>
+          <div class="chip" data-value="Dryness"><span class="chip-icon">🍂</span>Dryness</div>
+          <div class="chip" data-value="Dullness"><span class="chip-icon">✨</span>Dullness</div>
+          <div class="chip" data-value="None in particular"><span class="chip-icon">🙂</span>None</div>
+        </div>
+
+        <span class="field-label">Budget</span>
+        <div class="chips" id="quiz-budget">
+          <div class="chip" data-value="Affordable drugstore"><span class="chip-icon">🛒</span>Budget</div>
+          <div class="chip" data-value="Mid-range"><span class="chip-icon">💳</span>Mid</div>
+          <div class="chip" data-value="Splurge-worthy"><span class="chip-icon">💎</span>Splurge</div>
+        </div>
+
+        <button class="primary-btn" id="quiz-btn">Get my recommendations</button>
+        <p class="error-line" id="quiz-error"></p>
+        <div class="quiz-result hidden" id="quiz-result"></div>
+      </div>
     </div>
 
     <!-- LIVE SCREEN -->
@@ -792,6 +904,15 @@
     <div class="looks-grid" id="looks-grid"></div>
   </div>
 
+  <!-- ================= ADVICE TAB ================= -->
+  <div id="advice-view" class="hidden">
+    <span class="eyebrow">Skin &amp; self-care</span>
+    <h1 class="headline">Advice.</h1>
+    <p class="sub">Gentle skincare basics, DIY masks, and habits that help — makeup looks better on skin that's cared for.</p>
+    <div id="advice-list"></div>
+    <p class="advice-disclaimer">This is general guidance, not medical advice — if a concern isn't improving, a dermatologist is always your best resource.</p>
+  </div>
+
   <!-- ================= ACCOUNT TAB ================= -->
   <div id="account-view" class="hidden">
     <span class="eyebrow">Your account</span>
@@ -859,6 +980,7 @@
 <nav class="tabbar" id="tabbar">
   <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
   <button class="tab-btn" data-tab="looks"><span class="tab-icon">💫</span><span class="tab-label">Looks</span></button>
+  <button class="tab-btn" data-tab="advice"><span class="tab-icon">🌿</span><span class="tab-label">Advice</span></button>
   <button class="tab-btn" data-tab="account"><span class="tab-icon">👤</span><span class="tab-label">Account</span></button>
 </nav>
 
@@ -889,6 +1011,16 @@ async function callClaude(content) {
 function stripFences(s){
   return s.replace(/```json/g, "").replace(/```/g, "").trim();
 }
+
+// ---------- Brand quote strip ----------
+const BRAND_QUOTES = [
+  "Glow is a mood, not a size.",
+  "Confidence is your best highlighter.",
+  "Progress, not perfection — every face is a first draft.",
+  "Soft skin, loud lip, main character energy.",
+  "You don't need it all — just what makes you feel like you.",
+];
+document.getElementById('brand-quote').textContent = BRAND_QUOTES[Math.floor(Math.random() * BRAND_QUOTES.length)];
 
 // ---------- Local storage helpers (account/favourites/routines/reviews live on this device only) ----------
 function loadJSON(key, fallback){
@@ -999,12 +1131,61 @@ function openLookDetail(lookId){
 
 function useLookAsGuide(look){
   switchTab('home');
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  const matchingChip = document.querySelector(`.chip[data-occasion="${look.tag}"]`);
+  document.querySelectorAll('#occasion-chips .chip').forEach(c => c.classList.remove('active'));
+  const matchingChip = document.querySelector(`#occasion-chips .chip[data-occasion="${look.tag}"]`);
   if (matchingChip) matchingChip.classList.add('active');
   state.occasion = look.tag;
   document.getElementById('products-input').value = look.products;
 }
+
+// ---------- Curated skincare advice ----------
+const ADVICE = [
+  { id:'cleanse', icon:'🧼', title:'Cleansing basics', body:[
+    "Wash your face twice a day — morning and night — with a gentle, fragrance-free cleanser. More than that can strip your skin and make things worse.",
+    "Use lukewarm water, not hot — hot water can dry out and irritate skin.",
+    "Pat your face dry with a clean towel instead of rubbing." ] },
+  { id:'acne', icon:'🎯', title:'Acne &amp; blemishes', body:[
+    "Don't pick or pop — it usually leads to more redness and scarring, and takes longer to heal.",
+    "Look for gentle spot treatments with salicylic acid or benzoyl peroxide, used sparingly.",
+    "Change pillowcases regularly and try to avoid touching your face throughout the day.",
+    "If breakouts are painful, widespread, or not improving after a few weeks, a dermatologist can help far more than any home remedy." ] },
+  { id:'masks', icon:'🍯', title:'DIY masks (the safe kind)', body:[
+    "Honey + oats: mix 1 tbsp raw honey with a spoon of finely ground oats for a gentle, soothing mask. Leave 10-15 minutes, rinse with lukewarm water.",
+    "Plain yogurt + honey: both are soothing and hydrating — good for a quick 10 minute mask.",
+    "Aloe vera gel (fresh or store-bought, fragrance-free) is calming on irritated or sun-exposed skin.",
+    "Skip DIY 'hacks' with lemon juice, toothpaste, baking soda, or cinnamon — they're too harsh and can damage your skin barrier, whatever the internet says." ] },
+  { id:'diet', icon:'🥗', title:'Diet &amp; hydration', body:[
+    "Drinking enough water throughout the day supports skin that looks and feels healthier.",
+    "A balanced diet with fruit, vegetables, and less sugary or greasy food can help some people's skin — everyone's different, so notice what works for you.",
+    "Skin takes weeks to show change, so give any new habit time before judging it." ] },
+  { id:'sun', icon:'☀️', title:'Sun protection', body:[
+    "A daily SPF (30 or higher) is one of the most effective things you can do for your skin long-term — yes, even on cloudy days.",
+    "Reapply if you're outside for a long time, especially around water or snow." ] },
+  { id:'sleep', icon:'🌙', title:'Sleep &amp; stress', body:[
+    "Skin repairs itself while you sleep — aim for a consistent sleep schedule where you can.",
+    "Stress can trigger breakouts for some people. Little things like a wind-down routine before bed can help both your mood and your skin." ] },
+];
+
+function renderAdviceList(){
+  const wrap = document.getElementById('advice-list');
+  wrap.innerHTML = ADVICE.map(a => `
+    <div class="routine-item">
+      <div class="routine-head" data-advice-id="${a.id}">
+        <div><b>${a.icon} ${a.title}</b></div>
+        <span class="acct-remove" style="pointer-events:none;">▾</span>
+      </div>
+      <div class="routine-steps hidden" id="advice-body-${a.id}">
+        ${a.body.map(line => `<p class="routine-step">${line}</p>`).join('')}
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.routine-head').forEach(head => {
+    head.addEventListener('click', () => {
+      document.getElementById(`advice-body-${head.dataset.adviceId}`).classList.toggle('hidden');
+    });
+  });
+}
+renderAdviceList();
 
 // ---------- Account view ----------
 function renderAccountView(){
@@ -1111,7 +1292,7 @@ document.getElementById('review-submit-btn').addEventListener('click', () => {
 });
 
 // ---------- Tab bar ----------
-const TAB_VIEWS = { home: 'home-view', looks: 'looks-view', account: 'account-view' };
+const TAB_VIEWS = { home: 'home-view', looks: 'looks-view', advice: 'advice-view', account: 'account-view' };
 function switchTab(tab){
   Object.entries(TAB_VIEWS).forEach(([key, id]) => {
     document.getElementById(id).classList.toggle('hidden', key !== tab);
@@ -1129,15 +1310,66 @@ function setTabbarVisible(visible){
   document.getElementById('tabbar').classList.toggle('hidden', !visible);
 }
 
-// ---------- Setup screen: occasion chips ----------
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    state.occasion = chip.dataset.occasion;
+// ---------- Chip groups (occasion picker + skin quiz), each scoped to its own container ----------
+function setupChipGroup(containerId, onSelect){
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      onSelect(chip.dataset.occasion || chip.dataset.value);
+    });
   });
-});
+}
+
+setupChipGroup('occasion-chips', (val) => { state.occasion = val; });
 document.querySelector('.chip[data-occasion="School"]').classList.add('active');
+
+const quiz = { skinType:'', skinTone:'', concern:'', budget:'' };
+setupChipGroup('quiz-skin-type', v => { quiz.skinType = v; });
+setupChipGroup('quiz-skin-tone', v => { quiz.skinTone = v; });
+setupChipGroup('quiz-concern', v => { quiz.concern = v; });
+setupChipGroup('quiz-budget', v => { quiz.budget = v; });
+
+document.getElementById('quiz-btn').addEventListener('click', async () => {
+  const errEl = document.getElementById('quiz-error');
+  const resultEl = document.getElementById('quiz-result');
+  errEl.textContent = '';
+
+  if (!quiz.skinType || !quiz.skinTone || !quiz.concern || !quiz.budget) {
+    errEl.textContent = 'Pick one answer for each question first.';
+    return;
+  }
+
+  const btn = document.getElementById('quiz-btn');
+  btn.disabled = true;
+  btn.textContent = 'Thinking…';
+  resultEl.classList.remove('hidden');
+  resultEl.textContent = 'Putting together your recommendations…';
+
+  const prompt = `You are a knowledgeable, friendly makeup and skincare advisor for teenagers and beginners.
+Skin type: ${quiz.skinType}
+Skin tone: ${quiz.skinTone}
+Main concern: ${quiz.concern}
+Budget: ${quiz.budget}
+
+Give a short, encouraging recommendation covering, in this order:
+1. What kind of makeup look would suit them well right now (1-2 sentences)
+2. 3-4 product types they should prioritize owning, each with one real, widely available, budget-appropriate brand and product example (e.g. "Concealer - Maybelline Instant Age Rewind")
+3. One quick tip specific to their skin type
+
+Keep it warm and concise. Plain text only, no markdown, no asterisks, no headers — just clear sentences with a line break between each of the three parts.`;
+
+  try {
+    const text = await callClaude([{ type: "text", text: prompt }]);
+    resultEl.textContent = text.trim();
+  } catch (err) {
+    resultEl.textContent = "Couldn't get your recommendations — try again.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Get my recommendations';
+  }
+});
 
 // ---------- Scan products photo ----------
 document.getElementById('scan-input').addEventListener('change', async (e) => {
