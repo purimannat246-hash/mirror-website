@@ -647,7 +647,7 @@
     font-size:21px; display:flex; align-items:center; justify-content:center;
     cursor:pointer; box-shadow:3px 3px 0 rgba(0,0,0,0.6);
   }
-  .chat-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; }
+  .chat-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; transform:translateZ(0); }
   .chat-overlay.hidden{ display:none; }
   .chat-card{
     width:100%; max-width:480px; margin:0 auto;
@@ -1183,13 +1183,29 @@ function renderChatMessages(){
   wrap.scrollTop = wrap.scrollHeight;
 }
 
+// iOS Safari doesn't resize `position:fixed` elements when the keyboard opens --
+// only the visible area shrinks underneath them -- so the overlay's real height
+// is kept in sync with window.visualViewport instead of relying on CSS alone.
+function syncChatOverlayHeight(){
+  const overlay = document.getElementById('chat-overlay');
+  if (overlay.classList.contains('hidden')) return;
+  if (window.visualViewport) {
+    overlay.style.height = window.visualViewport.height + 'px';
+  }
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', syncChatOverlayHeight);
+}
+
 document.getElementById('chat-fab').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.remove('hidden');
   document.getElementById('bg-stickers').classList.add('hidden');
   renderChatMessages();
+  syncChatOverlayHeight();
 });
 document.getElementById('chat-close').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.add('hidden');
+  document.getElementById('chat-overlay').style.height = '';
   document.getElementById('bg-stickers').classList.remove('hidden');
 });
 
