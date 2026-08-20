@@ -1184,17 +1184,21 @@ function renderChatMessages(){
 }
 
 // iOS Safari doesn't resize `position:fixed` elements when the keyboard opens --
-// only the visible area shrinks underneath them -- so the overlay's real height
-// is kept in sync with window.visualViewport instead of relying on CSS alone.
+// it shrinks the *visual* viewport and scrolls it relative to the *layout*
+// viewport (which fixed elements are anchored to) -- so both the height AND
+// that scroll offset have to be tracked, or the overlay drifts and leaves a
+// gap where the page underneath shows through.
 function syncChatOverlayHeight(){
   const overlay = document.getElementById('chat-overlay');
   if (overlay.classList.contains('hidden')) return;
-  if (window.visualViewport) {
-    overlay.style.height = window.visualViewport.height + 'px';
-  }
+  const vv = window.visualViewport;
+  if (!vv) return;
+  overlay.style.height = vv.height + 'px';
+  overlay.style.transform = `translate3d(${vv.offsetLeft}px, ${vv.offsetTop}px, 0)`;
 }
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', syncChatOverlayHeight);
+  window.visualViewport.addEventListener('scroll', syncChatOverlayHeight);
 }
 
 document.getElementById('chat-fab').addEventListener('click', () => {
@@ -1206,6 +1210,7 @@ document.getElementById('chat-fab').addEventListener('click', () => {
 document.getElementById('chat-close').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.add('hidden');
   document.getElementById('chat-overlay').style.height = '';
+  document.getElementById('chat-overlay').style.transform = '';
   document.getElementById('bg-stickers').classList.remove('hidden');
 });
 
