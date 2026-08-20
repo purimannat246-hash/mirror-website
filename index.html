@@ -638,6 +638,59 @@
   }
   .look-products{ font-size:13px; color:var(--muted); font-weight:500; line-height:1.5; margin:0 0 20px; }
 
+  /* ---------- chat widget ---------- */
+  .chat-fab-wrap{ position:fixed; inset:0; max-width:480px; margin:0 auto; pointer-events:none; z-index:45; }
+  .chat-fab{
+    position:absolute; right:16px; bottom:96px; pointer-events:auto;
+    width:52px; height:52px; border-radius:50%;
+    background:var(--pink); color:#000; border:2px solid var(--line);
+    font-size:21px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; box-shadow:3px 3px 0 rgba(0,0,0,0.6);
+  }
+  .chat-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; }
+  .chat-overlay.hidden{ display:none; }
+  .chat-card{
+    width:100%; max-width:480px; margin:0 auto;
+    background:var(--surface); border-top:2px solid var(--line);
+    border-radius:24px 24px 0 0;
+    height:76vh; max-height:640px;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .chat-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; border-bottom:2px solid var(--line); flex-shrink:0;
+  }
+  .chat-header-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; }
+  .chat-close{
+    width:28px; height:28px; border-radius:50%;
+    background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
+    font-size:12px; cursor:pointer; flex-shrink:0;
+  }
+  .chat-messages{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:10px; }
+  .chat-empty{ font-size:12.5px; color:var(--muted); font-weight:500; text-align:center; margin-top:30px; line-height:1.6; }
+  .chat-bubble{
+    max-width:82%; padding:10px 13px; border-radius:14px; font-size:13px; font-weight:500; line-height:1.5;
+    border:1.5px solid var(--line); white-space:pre-line;
+  }
+  .chat-bubble.user{ align-self:flex-end; background:var(--pink); color:#000; border-bottom-right-radius:4px; }
+  .chat-bubble.assistant{ align-self:flex-start; background:var(--surface-2); color:var(--ink); border-bottom-left-radius:4px; }
+  .chat-bubble.pending{ color:var(--muted); font-style:italic; }
+  .chat-input-row{
+    display:flex; gap:8px; padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    border-top:2px solid var(--line); background:var(--surface); flex-shrink:0;
+  }
+  .chat-input{
+    flex:1; background:var(--surface-2); border:2px solid var(--line); border-radius:12px;
+    color:var(--ink); font-family:'Karla', sans-serif; font-size:13px; padding:10px 12px; outline:none;
+  }
+  .chat-input::placeholder{ color:var(--muted); }
+  .chat-send{
+    width:44px; border-radius:12px; border:2px solid var(--line);
+    background:var(--pink); color:#000; font-size:16px; cursor:pointer;
+  }
+  .chat-send:disabled{ opacity:0.5; }
+
   /* ---------- advice tab ---------- */
   .advice-disclaimer{
     font-size:11.5px;
@@ -977,6 +1030,24 @@
 
 <div class="look-detail-overlay hidden" id="look-detail-overlay"></div>
 
+<div class="chat-fab-wrap" id="chat-fab-wrap">
+  <button class="chat-fab" id="chat-fab" aria-label="Chat with Glomi">💬</button>
+</div>
+
+<div class="chat-overlay hidden" id="chat-overlay">
+  <div class="chat-card">
+    <div class="chat-header">
+      <div class="chat-header-title"><span class="brand-dot"></span>Ask Glomi</div>
+      <button class="chat-close" id="chat-close">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chat-input" type="text" placeholder="Ask about a product, a look, your skin…">
+      <button class="chat-send" id="chat-send">➤</button>
+    </div>
+  </div>
+</div>
+
 <nav class="tabbar" id="tabbar">
   <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
   <button class="tab-btn" data-tab="looks"><span class="tab-icon">💫</span><span class="tab-label">Looks</span></button>
@@ -1012,6 +1083,25 @@ function stripFences(s){
   return s.replace(/```json/g, "").replace(/```/g, "").trim();
 }
 
+async function callClaudeMessages(messages, system) {
+  const response = await fetch("/api/claude", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, system })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+  return (data.content || []).map(b => b.text || "").join("\n");
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 // ---------- Brand quote strip ----------
 const BRAND_QUOTES = [
   "Glow is a mood, not a size.",
@@ -1039,6 +1129,68 @@ function getRoutines(){ return loadJSON('glomi_routines', []); }
 function setRoutines(r){ saveJSON('glomi_routines', r); }
 function getReviews(){ return loadJSON('glomi_reviews', []); }
 function setReviews(r){ saveJSON('glomi_reviews', r); }
+function getChatHistory(){ return loadJSON('glomi_chat', []); }
+function setChatHistory(h){ saveJSON('glomi_chat', h); }
+
+// ---------- Chat widget ("Ask Glomi") ----------
+const CHAT_SYSTEM_PROMPT = "You are Glomi, a warm, knowledgeable makeup and skincare assistant for teenagers and beginners. Answer naturally and conversationally, keep replies fairly short (2-4 sentences unless asked for more detail), plain text only, no markdown or asterisks.";
+
+function renderChatMessages(){
+  const wrap = document.getElementById('chat-messages');
+  const history = getChatHistory();
+  if (!history.length){
+    wrap.innerHTML = `<p class="chat-empty">Ask me anything — product picks, a technique, what might work for your skin. I'm not just for live guides.</p>`;
+    return;
+  }
+  wrap.innerHTML = history.map(m => `<div class="chat-bubble ${m.role === 'user' ? 'user' : 'assistant'}">${escapeHtml(m.content)}</div>`).join('');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+document.getElementById('chat-fab').addEventListener('click', () => {
+  document.getElementById('chat-overlay').classList.remove('hidden');
+  renderChatMessages();
+});
+document.getElementById('chat-close').addEventListener('click', () => {
+  document.getElementById('chat-overlay').classList.add('hidden');
+});
+
+async function sendChatMessage(){
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const sendBtn = document.getElementById('chat-send');
+
+  const history = getChatHistory();
+  history.push({ role: 'user', content: text });
+  setChatHistory(history);
+  input.value = '';
+  renderChatMessages();
+
+  sendBtn.disabled = true;
+  const wrap = document.getElementById('chat-messages');
+  wrap.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant pending" id="chat-pending">…</div>`);
+  wrap.scrollTop = wrap.scrollHeight;
+
+  try {
+    const apiMessages = getChatHistory().map(m => ({ role: m.role, content: m.content }));
+    const reply = await callClaudeMessages(apiMessages, CHAT_SYSTEM_PROMPT);
+    const updated = getChatHistory();
+    updated.push({ role: 'assistant', content: reply.trim() });
+    setChatHistory(updated);
+  } catch (err) {
+    const updated = getChatHistory();
+    updated.push({ role: 'assistant', content: "Sorry, I couldn't get that — try again in a moment." });
+    setChatHistory(updated);
+  } finally {
+    document.getElementById('chat-pending')?.remove();
+    sendBtn.disabled = false;
+    renderChatMessages();
+  }
+}
+document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+document.getElementById('chat-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+});
 
 // ---------- Curated look gallery ----------
 const LOOKS = [
@@ -1308,6 +1460,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 function setTabbarVisible(visible){
   document.getElementById('tabbar').classList.toggle('hidden', !visible);
+  document.getElementById('chat-fab-wrap').classList.toggle('hidden', !visible);
 }
 
 // ---------- Chip groups (occasion picker + skin quiz), each scoped to its own container ----------
