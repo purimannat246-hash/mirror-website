@@ -443,11 +443,11 @@
   }
   .diagram-face{
     fill:none;
-    stroke:var(--muted);
-    stroke-width:2;
+    stroke:var(--ink);
+    stroke-width:1.6;
     stroke-linecap:round;
     stroke-linejoin:round;
-    opacity:0.6;
+    opacity:0.55;
   }
   .diagram-marker{
     fill:var(--pink);
@@ -935,14 +935,18 @@
 
       <div class="diagram-card">
         <svg viewBox="0 0 200 240" id="face-diagram">
-          <path class="diagram-face" d="M100,18 C58,18 40,54 40,100 C40,152 64,208 100,227 C136,208 160,152 160,100 C160,54 142,18 100,18 Z"/>
-          <path class="diagram-face" d="M66,86 Q74,78 84,83" />
-          <path class="diagram-face" d="M116,83 Q126,78 134,86" />
-          <path class="diagram-face" d="M68,98 Q76,93 84,97 Q76,102 68,98 Z" />
-          <path class="diagram-face" d="M116,97 Q124,93 132,98 Q124,102 116,97 Z" />
-          <path class="diagram-face" d="M99,112 L93,136 L102,139" />
-          <path class="diagram-face" d="M76,167 Q100,160 124,167" />
-          <path class="diagram-face" d="M78,169 Q100,182 122,169" />
+          <path class="diagram-face" d="M100,14 C58,14 36,52 36,98 C36,134 48,162 70,182 C82,193 90,199 100,201 C110,199 118,193 130,182 C152,162 164,134 164,98 C164,52 142,14 100,14 Z"/>
+          <path class="diagram-face" d="M74,180 C68,196 60,212 34,238" />
+          <path class="diagram-face" d="M126,180 C132,196 140,212 166,238" />
+          <path class="diagram-face" d="M66,82 Q76,72 90,79" />
+          <path class="diagram-face" d="M110,79 Q124,72 134,82" />
+          <path class="diagram-face" d="M68,98 Q81,87 95,96 Q81,107 68,98 Z" />
+          <path class="diagram-face" d="M105,96 Q119,87 132,98 Q119,107 105,96 Z" />
+          <circle class="diagram-face" cx="81" cy="98" r="3" />
+          <circle class="diagram-face" cx="119" cy="98" r="3" />
+          <path class="diagram-face" d="M104,104 C101,116 97,127 92,136 Q100,142 108,136" />
+          <path class="diagram-face" d="M75,159 Q87,151 100,155 Q113,151 125,159" />
+          <path class="diagram-face" d="M75,159 Q100,177 125,159" />
           <g id="marker-group"></g>
         </svg>
         <div class="diagram-copy" id="diagram-copy">Where to put it goes here.</div>
@@ -1768,16 +1772,16 @@ function captureFrame(){
 
 // ---------- Face diagram ----------
 const zoneCoords = {
-  'forehead':   [[100,50]],
-  'brows':      [[76,80],[124,80]],
-  'eyelids':    [[76,96],[124,96]],
-  'under-eyes': [[74,112],[126,112]],
-  'cheeks':     [[58,140],[142,140]],
-  'nose':       [[100,120]],
-  'lips':       [[100,175]],
-  'jawline':    [[62,188],[138,188]],
-  'chin':       [[100,206]],
-  'all-over':   [[76,90],[124,90],[100,120],[65,140],[135,140],[100,175]],
+  'forehead':   [[100,42]],
+  'brows':      [[78,77],[122,77]],
+  'eyelids':    [[81,98],[119,98]],
+  'under-eyes': [[81,110],[119,110]],
+  'cheeks':     [[56,138],[144,138]],
+  'nose':       [[100,128]],
+  'lips':       [[100,163]],
+  'jawline':    [[72,186],[128,186]],
+  'chin':       [[100,199]],
+  'all-over':   [[78,90],[122,90],[100,128],[58,138],[142,138],[100,163]],
 };
 
 function getMarkerPoints(zone, count){
