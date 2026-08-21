@@ -680,6 +680,13 @@
   .look-art.smoky-night{ background:linear-gradient(150deg, #4A1240, #050505); }
   .look-art.soft-romantic{ background:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
   .look-art.editorial-pop{ background:linear-gradient(150deg, #FF17C4, #FF8A00); }
+  .look-art.golden-hour{ background:linear-gradient(150deg, #F2B84B, #4A2F0A); }
+  .look-art.vampy-night{ background:linear-gradient(150deg, #6B0F2B, #1A0208); }
+  .look-pro-badge{
+    position:absolute; top:8px; left:8px; z-index:2;
+    font-family:'IBM Plex Mono', monospace; font-size:9px; font-weight:700; letter-spacing:0.05em;
+    background:var(--ink); color:#000; padding:3px 7px; border-radius:5px;
+  }
   .look-save{
     position:absolute; top:8px; right:8px;
     width:28px; height:28px; border-radius:50%;
@@ -718,6 +725,8 @@
   .look-featured.smoky-night{ background-image:linear-gradient(150deg, #4A1240, #050505); }
   .look-featured.soft-romantic{ background-image:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
   .look-featured.editorial-pop{ background-image:linear-gradient(150deg, #FF17C4, #FF8A00); }
+  .look-featured.golden-hour{ background-image:linear-gradient(150deg, #F2B84B, #4A2F0A); }
+  .look-featured.vampy-night{ background-image:linear-gradient(150deg, #6B0F2B, #1A0208); }
 
   .look-detail-overlay{
     position:fixed; inset:0; z-index:60;
@@ -794,6 +803,7 @@
     padding:16px 18px; border-bottom:2px solid var(--line); flex-shrink:0;
   }
   .chat-header-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; }
+  .chat-usage-note{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); margin:4px 0 0; }
   .chat-close{
     width:28px; height:28px; border-radius:50%;
     background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
@@ -1174,6 +1184,7 @@
       <h1 class="headline">You're ready. ✨</h1>
       <p class="sub">That's the full look. Save it to your account, or start another.</p>
       <button class="ghost-btn" id="save-look-btn">💾 Save this look</button>
+      <p class="error-line" id="save-limit-note"></p>
       <button class="ghost-btn" id="restart-btn">Start another look</button>
     </div>
 
@@ -1321,6 +1332,7 @@
 
     <button class="primary-btn" id="review-save-btn">Save to my guides</button>
     <button class="ghost-btn" id="review-skip-btn">Skip photo &amp; description, just save</button>
+    <p class="error-line" id="review-limit-note"></p>
   </div>
 </div>
 
@@ -1331,7 +1343,10 @@
 <div class="chat-overlay hidden" id="chat-overlay">
   <div class="chat-card">
     <div class="chat-header">
-      <div class="chat-header-title"><span class="brand-dot"></span>Ask Glomi</div>
+      <div>
+        <div class="chat-header-title"><span class="brand-dot"></span>Ask Glomi</div>
+        <p class="chat-usage-note" id="chat-usage-note"></p>
+      </div>
       <button class="chat-close" id="chat-close" aria-label="Close">✕</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
@@ -1417,6 +1432,24 @@ function loadJSON(key, fallback){
 function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
 
 function getAccount(){ return loadJSON('glomi_account', { name:'', email:'', plan:'free', cardLast4:'' }); }
+function isProAccount(){ return getAccount().plan === 'pro'; }
+
+// ---------- Free-plan limits (soft, on-device only -- see CLAUDE.md) ----------
+const FREE_GUIDE_LIMIT = 3;
+const FREE_CHAT_LIMIT = 5;
+
+function canSaveMoreGuides(){
+  return isProAccount() || getRoutines().length < FREE_GUIDE_LIMIT;
+}
+function showSaveLimitMessage(noteId){
+  const note = document.getElementById(noteId);
+  note.innerHTML = `Free plan is limited to ${FREE_GUIDE_LIMIT} saved guides — <a href="#" id="${noteId}-upgrade" style="color:var(--pink);font-weight:700;">upgrade to Glomi Pro</a> for unlimited.`;
+  document.getElementById(`${noteId}-upgrade`).addEventListener('click', (e) => {
+    e.preventDefault();
+    switchTab('account');
+    openCheckout();
+  });
+}
 function setAccount(a){ saveJSON('glomi_account', a); }
 function getFavorites(){ return loadJSON('glomi_favorites', []); }
 function setFavorites(f){ saveJSON('glomi_favorites', f); }
@@ -1426,6 +1459,23 @@ function getReviews(){ return loadJSON('glomi_reviews', []); }
 function setReviews(r){ saveJSON('glomi_reviews', r); }
 function getChatHistory(){ return loadJSON('glomi_chat', []); }
 function setChatHistory(h){ saveJSON('glomi_chat', h); }
+
+function getChatUsageToday(){
+  const today = new Date().toISOString().slice(0, 10);
+  const usage = loadJSON('glomi_chat_usage', { date: today, count: 0 });
+  return usage.date === today ? usage : { date: today, count: 0 };
+}
+function incrementChatUsageToday(){
+  const usage = getChatUsageToday();
+  usage.count += 1;
+  saveJSON('glomi_chat_usage', usage);
+}
+function renderChatUsageNote(){
+  const note = document.getElementById('chat-usage-note');
+  if (isProAccount()) { note.textContent = ''; return; }
+  const remaining = Math.max(0, FREE_CHAT_LIMIT - getChatUsageToday().count);
+  note.textContent = `${remaining} of ${FREE_CHAT_LIMIT} free messages left today`;
+}
 
 // ---------- Chat widget ("Ask Glomi") ----------
 const CHAT_SYSTEM_PROMPT = "You are Glomi, a warm, knowledgeable makeup and skincare assistant for teenagers and beginners. Answer naturally and conversationally, keep replies fairly short (2-4 sentences unless asked for more detail), plain text only, no markdown or asterisks.";
@@ -1499,6 +1549,7 @@ document.getElementById('chat-fab').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.remove('hidden');
   document.getElementById('bg-stickers').classList.add('hidden');
   renderChatMessages();
+  renderChatUsageNote();
   syncChatOverlayHeight();
 });
 document.getElementById('chat-close').addEventListener('click', closeChatOverlay);
@@ -1511,6 +1562,21 @@ async function sendChatMessage(){
   const text = input.value.trim();
   if (!text) return;
   const sendBtn = document.getElementById('chat-send');
+
+  if (!isProAccount() && getChatUsageToday().count >= FREE_CHAT_LIMIT) {
+    const wrap = document.getElementById('chat-messages');
+    wrap.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant">You've hit today's free chat limit (${FREE_CHAT_LIMIT} messages). <a href="#" id="chat-limit-upgrade" style="color:var(--pink);font-weight:700;">Upgrade to Glomi Pro</a> for unlimited chat, or come back tomorrow.</div>`);
+    wrap.scrollTop = wrap.scrollHeight;
+    document.getElementById('chat-limit-upgrade').addEventListener('click', (e) => {
+      e.preventDefault();
+      closeChatOverlay();
+      switchTab('account');
+      openCheckout();
+    });
+    return;
+  }
+  incrementChatUsageToday();
+  renderChatUsageNote();
 
   const history = getChatHistory();
   history.push({ role: 'user', content: text });
@@ -1564,6 +1630,12 @@ const LOOKS = [
   { id:'editorial-pop', name:'Editorial Pop', tag:'Other', art:'editorial-pop', icon:'🎨',
     desc:'Graphic liner or a bold color moment — makeup as a statement.',
     products:'colored eyeliner, bold eyeshadow, setting spray' },
+  { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour', icon:'🌟', pro:true,
+    desc:'Warm bronze eyes, a glowing highlight, and a golden-toned lip — like you caught the last bit of sunset.',
+    products:'bronzer, gold eyeshadow, cream highlighter, warm-toned lipstick' },
+  { id:'vampy-night', name:'Vampy Night', tag:'Party', art:'vampy-night', icon:'🍷', pro:true,
+    desc:'Deep berry and wine tones with a matte finish — dramatic, moody, unapologetically bold.',
+    products:'deep berry lipstick, matte eyeshadow, dark eyeliner, setting powder' },
 ];
 
 function renderLooksGrid(){
@@ -1574,6 +1646,7 @@ function renderLooksGrid(){
   const cardHtml = (look) => `
     <div class="look-card" data-look-id="${look.id}">
       <div class="look-art ${look.art}">
+        ${look.pro ? '<span class="look-pro-badge">PRO</span>' : ''}
         <span>${look.icon}</span>
         <button class="look-save" data-look-id="${look.id}" aria-label="Save look">${favorites.includes(look.id) ? '💖' : '🤍'}</button>
       </div>
@@ -1624,29 +1697,44 @@ function openLookDetail(lookId){
   const overlay = document.getElementById('look-detail-overlay');
   const favorites = getFavorites();
   const isSaved = favorites.includes(look.id);
+  const locked = look.pro && !isProAccount();
+
   overlay.innerHTML = `
     <div class="look-detail-card">
       <button class="look-detail-close" id="look-detail-close" aria-label="Close">✕</button>
       <div class="look-art ${look.art} detail"><span>${look.icon}</span></div>
       <span class="look-tag">${look.tag}</span>
+      ${look.pro ? '<span class="look-pro-badge" style="position:static;display:inline-block;margin-left:6px;">PRO</span>' : ''}
       <h2 class="look-name" style="font-size:22px;">${look.name}</h2>
       <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:16px;">${look.desc}</p>
-      <span class="field-label">Suggested products</span>
-      <p class="look-products">${look.products}</p>
-      <button class="primary-btn" id="use-look-btn">Use this look → start guide</button>
-      <button class="ghost-btn" id="fav-look-btn">${isSaved ? '💖 Saved to favourites' : '🤍 Save to favourites'}</button>
+      ${locked ? `
+        <p class="sub" style="margin-bottom:0;">This look is part of Glomi Pro — unlock it along with unlimited saved guides and chat.</p>
+        <button class="primary-btn" id="use-look-btn">Upgrade to unlock</button>
+      ` : `
+        <span class="field-label">Suggested products</span>
+        <p class="look-products">${look.products}</p>
+        <button class="primary-btn" id="use-look-btn">Use this look → start guide</button>
+        <button class="ghost-btn" id="fav-look-btn">${isSaved ? '💖 Saved to favourites' : '🤍 Save to favourites'}</button>
+      `}
     </div>
   `;
   overlay.classList.remove('hidden');
   document.getElementById('look-detail-close').addEventListener('click', () => overlay.classList.add('hidden'));
   document.getElementById('use-look-btn').addEventListener('click', () => {
     overlay.classList.add('hidden');
-    useLookAsGuide(look);
+    if (locked) {
+      switchTab('account');
+      openCheckout();
+    } else {
+      useLookAsGuide(look);
+    }
   });
-  document.getElementById('fav-look-btn').addEventListener('click', () => {
-    toggleFavorite(look.id);
-    openLookDetail(look.id);
-  });
+  if (!locked) {
+    document.getElementById('fav-look-btn').addEventListener('click', () => {
+      toggleFavorite(look.id);
+      openLookDetail(look.id);
+    });
+  }
 }
 
 function useLookAsGuide(look){
@@ -2098,6 +2186,7 @@ document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 
 // ---------- Save completed look ----------
 document.getElementById('save-look-btn').addEventListener('click', () => {
+  if (!canSaveMoreGuides()) { showSaveLimitMessage('save-limit-note'); return; }
   const routines = getRoutines();
   routines.unshift({
     id: 'r_' + Date.now(),
@@ -2107,6 +2196,7 @@ document.getElementById('save-look-btn').addEventListener('click', () => {
     savedAt: new Date().toISOString(),
   });
   setRoutines(routines);
+  document.getElementById('save-limit-note').textContent = '';
   const btn = document.getElementById('save-look-btn');
   btn.textContent = 'Saved ✓';
   btn.disabled = true;
@@ -2120,6 +2210,7 @@ function openReviewOverlay(){
   document.getElementById('review-photo-empty').classList.remove('hidden');
   document.getElementById('review-photo-wrap').classList.add('hidden');
   document.getElementById('review-desc-input').value = '';
+  document.getElementById('review-limit-note').textContent = '';
   document.getElementById('review-overlay').classList.remove('hidden');
 }
 document.getElementById('finish-review-btn').addEventListener('click', openReviewOverlay);
@@ -2154,6 +2245,7 @@ document.getElementById('review-capture-btn').addEventListener('click', captureR
 document.getElementById('review-retake-btn').addEventListener('click', captureReviewPhoto);
 
 function saveReviewedLook(){
+  if (!canSaveMoreGuides()) { showSaveLimitMessage('review-limit-note'); return; }
   const routines = getRoutines();
   routines.unshift({
     id: 'r_' + Date.now(),
@@ -2319,6 +2411,7 @@ document.getElementById('next-btn').addEventListener('click', () => {
     const saveBtn = document.getElementById('save-look-btn');
     saveBtn.textContent = '💾 Save this look';
     saveBtn.disabled = false;
+    document.getElementById('save-limit-note').textContent = '';
   }
 });
 
