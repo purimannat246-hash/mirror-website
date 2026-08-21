@@ -656,6 +656,29 @@
   }
   .look-products{ font-size:13px; color:var(--muted); font-weight:500; line-height:1.5; margin:0 0 20px; }
 
+  /* ---------- checkout (preview, no real charge) ---------- */
+  .checkout-field{ margin-bottom:14px; }
+  .checkout-row{ display:flex; gap:10px; }
+  .checkout-row .checkout-field{ flex:1; }
+  .checkout-input{
+    width:100%;
+    background:var(--surface-2);
+    border:2px solid var(--line);
+    border-radius:10px;
+    color:var(--ink);
+    font-family:'Karla', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:11px 12px;
+    outline:none;
+  }
+  .checkout-input:focus{ border-color:var(--pink); }
+  .checkout-input::placeholder{ color:var(--muted); font-weight:500; }
+  .checkout-note{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--muted);
+    text-align:center; margin-top:14px; line-height:1.5;
+  }
+
   /* ---------- chat widget ---------- */
   .chat-fab-wrap{ position:fixed; inset:0; max-width:480px; margin:0 auto; pointer-events:none; z-index:45; }
   .chat-fab{
@@ -762,7 +785,6 @@
   .acct-input::placeholder{ color:var(--muted); font-weight:500; }
 
   .sub-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
-  .sub-note{ font-size:11px; color:var(--pink); font-weight:600; margin-top:8px; min-height:14px; }
   .acct-manage-btn{
     background:var(--surface-2); color:var(--ink); border:2px solid var(--line);
     font-family:'Karla', sans-serif; font-weight:700; font-size:11.5px;
@@ -1023,10 +1045,9 @@
     <div class="acct-card">
       <p class="acct-title">Subscription</p>
       <div class="sub-row">
-        <span class="price-pill">from €5/mo · pay per look</span>
-        <button class="acct-manage-btn" id="manage-sub-btn">Manage</button>
+        <span class="price-pill" id="sub-plan-pill">Free plan</span>
+        <button class="acct-manage-btn" id="manage-sub-btn">Upgrade</button>
       </div>
-      <p class="sub-note" id="sub-note"></p>
     </div>
 
     <div class="acct-card">
@@ -1060,6 +1081,46 @@
 <canvas id="canvas" style="display:none;"></canvas>
 
 <div class="look-detail-overlay hidden" id="look-detail-overlay"></div>
+
+<div class="look-detail-overlay hidden" id="checkout-overlay">
+  <div class="look-detail-card">
+    <button class="look-detail-close" id="checkout-close" aria-label="Close">✕</button>
+    <span class="eyebrow">Upgrade</span>
+    <h2 class="look-name" style="font-size:22px;margin:8px 0 4px;">Glomi Pro</h2>
+    <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:18px;">from €5/mo · pay per look — unlimited live guides, saved routines, and priority feature access.</p>
+
+    <div id="checkout-form">
+      <div class="checkout-field">
+        <span class="field-label">Name on card</span>
+        <input class="checkout-input" id="cc-name" type="text" maxlength="60" placeholder="Full name" autocomplete="cc-name">
+      </div>
+      <div class="checkout-field">
+        <span class="field-label">Card number</span>
+        <input class="checkout-input" id="cc-number" type="text" inputmode="numeric" maxlength="19" placeholder="1234 1234 1234 1234" autocomplete="cc-number">
+      </div>
+      <div class="checkout-row">
+        <div class="checkout-field">
+          <span class="field-label">Expiry</span>
+          <input class="checkout-input" id="cc-expiry" type="text" inputmode="numeric" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp">
+        </div>
+        <div class="checkout-field">
+          <span class="field-label">CVC</span>
+          <input class="checkout-input" id="cc-cvc" type="text" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="cc-csc">
+        </div>
+      </div>
+      <button class="primary-btn" id="checkout-submit">Subscribe — €5/mo</button>
+      <p class="error-line" id="checkout-error"></p>
+      <p class="checkout-note">Prototype checkout — nothing you type here is sent anywhere or stored. Real billing is coming soon.</p>
+    </div>
+
+    <div class="checkout-success hidden" id="checkout-success">
+      <p style="font-size:40px;margin:0 0 10px;text-align:center;">✨</p>
+      <p class="acct-title" style="font-size:17px;text-align:center;">You're on Glomi Pro</p>
+      <p class="acct-subtitle" id="checkout-cardinfo" style="margin-top:6px;text-align:center;display:block;"></p>
+      <button class="ghost-btn" id="checkout-cancel" style="margin-top:20px;">Cancel Pro (preview)</button>
+    </div>
+  </div>
+</div>
 
 <div class="chat-fab-wrap" id="chat-fab-wrap">
   <button class="chat-fab" id="chat-fab" aria-label="Chat with Glomi">💬</button>
@@ -1152,7 +1213,7 @@ function loadJSON(key, fallback){
 }
 function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
 
-function getAccount(){ return loadJSON('glomi_account', { name:'', email:'' }); }
+function getAccount(){ return loadJSON('glomi_account', { name:'', email:'', plan:'free', cardLast4:'' }); }
 function setAccount(a){ saveJSON('glomi_account', a); }
 function getFavorites(){ return loadJSON('glomi_favorites', []); }
 function setFavorites(f){ saveJSON('glomi_favorites', f); }
@@ -1438,6 +1499,12 @@ function renderAccountView(){
   document.getElementById('acct-email-input').value = account.email || '';
   document.getElementById('acct-avatar').textContent = (account.name || 'G').trim().charAt(0).toUpperCase() || 'G';
 
+  const isPro = account.plan === 'pro';
+  document.getElementById('sub-plan-pill').textContent = isPro
+    ? `Glomi Pro · •••• ${account.cardLast4 || '····'}`
+    : 'Free plan';
+  document.getElementById('manage-sub-btn').textContent = isPro ? 'Manage' : 'Upgrade';
+
   const favorites = getFavorites();
   const favWrap = document.getElementById('acct-favorites');
   if (!favorites.length){
@@ -1508,8 +1575,77 @@ document.getElementById('acct-name-input').addEventListener('input', (e) => {
 document.getElementById('acct-email-input').addEventListener('input', (e) => {
   const account = getAccount(); account.email = e.target.value; setAccount(account);
 });
-document.getElementById('manage-sub-btn').addEventListener('click', () => {
-  document.getElementById('sub-note').textContent = "Billing isn't wired up in this prototype yet.";
+// ---------- Checkout (preview only -- see checkout-note in the markup: nothing typed here is stored or sent) ----------
+function openCheckout(){
+  const account = getAccount();
+  const isPro = account.plan === 'pro';
+  document.getElementById('checkout-form').classList.toggle('hidden', isPro);
+  document.getElementById('checkout-success').classList.toggle('hidden', !isPro);
+  if (isPro) {
+    document.getElementById('checkout-cardinfo').textContent = account.cardLast4 ? `Card ending in ${account.cardLast4}` : 'Preview plan active on this device';
+  } else {
+    document.getElementById('checkout-error').textContent = '';
+  }
+  document.getElementById('checkout-overlay').classList.remove('hidden');
+}
+document.getElementById('manage-sub-btn').addEventListener('click', openCheckout);
+document.getElementById('checkout-close').addEventListener('click', () => {
+  document.getElementById('checkout-overlay').classList.add('hidden');
+});
+document.getElementById('checkout-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'checkout-overlay') e.target.classList.add('hidden');
+});
+
+document.getElementById('cc-number').addEventListener('input', (e) => {
+  const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+  e.target.value = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+});
+document.getElementById('cc-expiry').addEventListener('input', (e) => {
+  const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+  e.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+});
+document.getElementById('cc-cvc').addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+});
+
+document.getElementById('checkout-submit').addEventListener('click', () => {
+  const errEl = document.getElementById('checkout-error');
+  const name = document.getElementById('cc-name').value.trim();
+  const numberDigits = document.getElementById('cc-number').value.replace(/\D/g, '');
+  const expiry = document.getElementById('cc-expiry').value.trim();
+  const cvc = document.getElementById('cc-cvc').value.trim();
+
+  if (!name || numberDigits.length < 12 || !/^\d{2}\/\d{2}$/.test(expiry) || cvc.length < 3) {
+    errEl.textContent = 'Check your details and try again.';
+    return;
+  }
+
+  const last4 = numberDigits.slice(-4);
+  const account = getAccount();
+  account.plan = 'pro';
+  account.cardLast4 = last4;
+  setAccount(account);
+
+  // Card number/CVC never get stored -- clear the fields immediately, keep only the last 4 digits for display.
+  document.getElementById('cc-name').value = '';
+  document.getElementById('cc-number').value = '';
+  document.getElementById('cc-expiry').value = '';
+  document.getElementById('cc-cvc').value = '';
+  errEl.textContent = '';
+
+  document.getElementById('checkout-cardinfo').textContent = `Card ending in ${last4}`;
+  document.getElementById('checkout-form').classList.add('hidden');
+  document.getElementById('checkout-success').classList.remove('hidden');
+  renderAccountView();
+});
+
+document.getElementById('checkout-cancel').addEventListener('click', () => {
+  const account = getAccount();
+  account.plan = 'free';
+  account.cardLast4 = '';
+  setAccount(account);
+  document.getElementById('checkout-overlay').classList.add('hidden');
+  renderAccountView();
 });
 
 let currentRating = 0;
