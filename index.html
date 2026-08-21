@@ -2416,6 +2416,7 @@ function renderScanResult(data){
       <b>€${Number(data.totalBudget || 0).toFixed(2)}</b>
     </div>
     <p class="scan-where">${escapeHtml(data.whereToBuy || '')}</p>
+    <p class="advice-disclaimer">This list is Claude's best guess from one photo, tailored to what it sees each time — not a dermatologist's opinion, and prices are estimates, not live retail data.</p>
   `;
   el.classList.remove('hidden');
 }
