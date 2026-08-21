@@ -1485,8 +1485,13 @@ function getRoutines(){ return loadJSON('glomi_routines', []); }
 function setRoutines(r){ saveJSON('glomi_routines', r); }
 function getReviews(){ return loadJSON('glomi_reviews', []); }
 function setReviews(r){ saveJSON('glomi_reviews', r); }
+// Keeping only the most recent messages stops the chat from getting slower
+// (bigger DOM render, bigger API payload, bigger localStorage write) the
+// longer someone's conversation history gets.
+const CHAT_HISTORY_LIMIT = 60;
+const CHAT_API_WINDOW = 20;
 function getChatHistory(){ return loadJSON('glomi_chat', []); }
-function setChatHistory(h){ saveJSON('glomi_chat', h); }
+function setChatHistory(h){ saveJSON('glomi_chat', h.slice(-CHAT_HISTORY_LIMIT)); }
 
 function getChatUsageToday(){
   const today = new Date().toISOString().slice(0, 10);
@@ -1618,7 +1623,7 @@ async function sendChatMessage(){
   wrap.scrollTop = wrap.scrollHeight;
 
   try {
-    const apiMessages = getChatHistory().map(m => ({ role: m.role, content: m.content }));
+    const apiMessages = getChatHistory().slice(-CHAT_API_WINDOW).map(m => ({ role: m.role, content: m.content }));
     const reply = await callClaudeMessages(apiMessages, CHAT_SYSTEM_PROMPT);
     const updated = getChatHistory();
     updated.push({ role: 'assistant', content: reply.trim() });
@@ -2439,8 +2444,10 @@ async function runFaceScan(){
   try {
     const video = document.getElementById('scan-video');
     const canvas = document.getElementById('canvas');
-    canvas.width = video.videoWidth || 480;
-    canvas.height = video.videoHeight || 480;
+    const maxDim = 480;
+    const scale = Math.min(1, maxDim / Math.max(video.videoWidth || maxDim, video.videoHeight || maxDim));
+    canvas.width = Math.round((video.videoWidth || maxDim) * scale);
+    canvas.height = Math.round((video.videoHeight || maxDim) * scale);
     const ctx = canvas.getContext('2d');
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
@@ -2471,8 +2478,13 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
 function captureFrame(){
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
-  canvas.width = video.videoWidth || 480;
-  canvas.height = video.videoHeight || 480;
+  // Cap to 480px like the review-photo capture -- the camera's native
+  // resolution is far more than a vision model needs and just slows down
+  // the upload and response for a live, in-the-moment check.
+  const maxDim = 480;
+  const scale = Math.min(1, maxDim / Math.max(video.videoWidth || maxDim, video.videoHeight || maxDim));
+  canvas.width = Math.round((video.videoWidth || maxDim) * scale);
+  canvas.height = Math.round((video.videoHeight || maxDim) * scale);
   const ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1); // un-mirror for the model
