@@ -2002,6 +2002,8 @@ document.getElementById('start-btn').addEventListener('click', async () => {
 
   const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.${styleContext}
 
+Match the intensity, finish, and product choices to what this occasion actually calls for — don't default to the same safe, natural routine regardless of occasion. As a guide: School or Everyday should stay light, quick, and low-maintenance. A Date should have a soft, romantic glow. A Party or night out should be bold — glittery or shimmery eyeshadow, richer color, and long-wearing/waterproof formulas called out where they matter (long-wear foundation, waterproof mascara, a transfer-resistant lip) so it actually holds up under lights and dancing, not a toned-down version of the look. For any other occasion, infer the right vibe and intensity from what they described.
+
 Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion${state.lookStyle ? ' and the specific look described above' : ''}. There is no fixed step count; use as many steps as the look genuinely needs.
 
 First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. For each step give:
