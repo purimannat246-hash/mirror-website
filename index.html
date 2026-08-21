@@ -189,50 +189,62 @@
   .occasion-other::placeholder{ color:var(--muted); font-weight:500; }
   .occasion-other:focus{ border-color:var(--pink); }
 
-  .products-box{
-    background:var(--surface);
-    border:2px solid var(--line);
-    border-radius:16px;
-    padding:16px;
-    margin-bottom:28px;
-    box-shadow:4px 4px 0 rgba(255,23,196,0.4);
-  }
-  .products-input{
+  .occasion-more{
+    display:block;
     width:100%;
-    background:transparent;
+    text-align:center;
+    background:none;
     border:none;
-    color:var(--ink);
-    font-family:'Karla', sans-serif;
-    font-weight:500;
-    font-size:14px;
-    resize:none;
-    outline:none;
-    min-height:44px;
-  }
-  .products-input::placeholder{ color:var(--muted); }
-  .scan-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-top:12px;
-    padding-top:12px;
-    border-top:2px dashed rgba(255,255,255,0.14);
-  }
-  .scan-btn{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    background:var(--ink);
-    border:none;
-    color:#000;
-    padding:8px 12px;
-    border-radius:10px;
-    font-size:12.5px;
-    font-weight:700;
     cursor:pointer;
     font-family:'Karla', sans-serif;
+    font-weight:700;
+    font-size:12.5px;
+    color:var(--muted);
+    margin:-18px 0 28px;
+    padding:8px;
   }
-  .scan-status{ font-size:12px; color:var(--pink); font-weight:600; }
+  .occasion-more:hover{ color:var(--pink); }
+  .needed-products{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+  .needed-product-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    background:var(--surface);
+    border:2px solid var(--line);
+    padding:8px 12px;
+    border-radius:8px;
+    color:var(--ink);
+    box-shadow:3px 3px 0 rgba(0,0,0,0.6);
+  }
+  .substitute-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    margin-left:8px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:'Karla', sans-serif;
+    padding:5px 10px;
+    border-radius:8px;
+  }
+  .substitute-btn:hover{ color:var(--pink); }
+  .substitute-result{
+    margin-top:10px;
+    background:var(--surface-2);
+    border:2px solid var(--pink);
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink);
+    line-height:1.5;
+  }
   .primary-btn{
     width:100%;
     padding:17px;
@@ -886,30 +898,19 @@
     <!-- SETUP SCREEN -->
     <div id="setup-screen">
       <span class="eyebrow">Prototype · core feature</span>
-      <h1 class="headline">Tell me what you're getting ready for.</h1>
-      <p class="sub">Pick the occasion, tell me what's in your bag, and I'll coach you through it live — camera on, step by step.</p>
+      <h1 class="headline">Choose a look.</h1>
+      <p class="sub">Pick what you're getting ready for and I'll build the whole routine — I'll tell you what you need, and swap anything you don't have.</p>
 
       <span class="field-label">Occasion</span>
       <div class="chips" id="occasion-chips">
         <div class="chip" data-occasion="School"><span class="chip-icon">🎒</span>School</div>
         <div class="chip" data-occasion="Date"><span class="chip-icon">🌙</span>Date</div>
         <div class="chip" data-occasion="Party"><span class="chip-icon">🎉</span>Party</div>
-        <div class="chip" data-occasion="Everyday"><span class="chip-icon">☀️</span>Everyday</div>
-        <div class="chip" data-occasion="Other"><span class="chip-icon">✨</span>Other</div>
+        <div class="chip hidden" data-occasion="Everyday"><span class="chip-icon">☀️</span>Everyday</div>
+        <div class="chip hidden" data-occasion="Other"><span class="chip-icon">✨</span>Other</div>
       </div>
+      <button class="occasion-more" id="occasion-more-btn">▾ More options</button>
       <input class="occasion-other hidden" id="occasion-other-input" type="text" maxlength="60" placeholder="Tell me the occasion — e.g. prom, photoshoot, wedding guest">
-
-      <span class="field-label">Your products</span>
-      <div class="products-box">
-        <textarea class="products-input" id="products-input" maxlength="500" placeholder="e.g. concealer, mascara, tinted lip balm, brown eyeshadow — separate with commas"></textarea>
-        <div class="scan-row">
-          <label class="scan-btn" id="scan-label">
-            📷 Scan a photo of your products
-            <input type="file" accept="image/*" id="scan-input" style="display:none;">
-          </label>
-          <span class="scan-status" id="scan-status"></span>
-        </div>
-      </div>
 
       <button class="primary-btn" id="start-btn">Start my live guide</button>
       <p class="error-line" id="setup-error"></p>
@@ -982,6 +983,17 @@
             </div>
           </div>
           <div class="community-card">
+            <div class="community-art smoky-night"><span>🖤</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">M</span>
+                <span class="community-name">Maya, 17</span>
+                <span class="community-stars">★★☆☆☆</span>
+              </div>
+              <p class="community-quote">The live camera feedback felt pretty generic for me half the time, and it lagged a bit on my older phone. The diagrams are nice though.</p>
+            </div>
+          </div>
+          <div class="community-card">
             <div class="community-art clean-girl"><span>🤍</span></div>
             <div class="community-body">
               <div class="community-head">
@@ -1001,6 +1013,17 @@
                 <span class="community-stars">★★★★★</span>
               </div>
               <p class="community-quote">Did the smoky eye for prom with the step-by-step diagram and it turned out way better than I expected.</p>
+            </div>
+          </div>
+          <div class="community-card">
+            <div class="community-art glass-skin"><span>🍯</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">E</span>
+                <span class="community-name">Ella, 15</span>
+                <span class="community-stars">★★★☆☆</span>
+              </div>
+              <p class="community-quote">Wish there were a few more occasion options built in, but the steps themselves are easy to follow and the voice guide is a nice touch.</p>
             </div>
           </div>
           <div class="community-card">
@@ -1044,6 +1067,8 @@
         <p class="step-instructions" id="step-instructions">—</p>
         <span class="step-product" id="step-product">—</span>
         <button class="speak-toggle on" id="speak-toggle">🔊 Read steps aloud</button>
+        <button class="substitute-btn" id="substitute-btn">🔁 Don't have this? Get a swap</button>
+        <div class="substitute-result hidden" id="substitute-result"></div>
       </div>
 
       <div class="diagram-card">
@@ -1081,6 +1106,16 @@
     <!-- LOADING (step generation) -->
     <div id="loading-screen" class="hidden">
       <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
+    </div>
+
+    <!-- SHOPPING LIST (what you'll need, before the live guide) -->
+    <div id="shopping-list-screen" class="hidden">
+      <button class="back-link" id="shopping-list-back" style="margin-bottom:16px;">← start over</button>
+      <span class="eyebrow">What you'll need</span>
+      <h1 class="headline">Here's your kit for this look.</h1>
+      <p class="sub">Gather these before you start — missing something? No worries, you can swap it for an alternative once you're in a step.</p>
+      <div class="needed-products" id="needed-products-list"></div>
+      <button class="primary-btn" id="shopping-list-continue">Got it, let's start →</button>
     </div>
 
     <!-- DONE SCREEN -->
@@ -1267,7 +1302,7 @@
 <script>
 const state = {
   occasion: 'School',
-  products: '',
+  neededProducts: [],
   steps: [],
   currentStep: 0,
   stream: null,
@@ -1551,9 +1586,16 @@ function useLookAsGuide(look){
   switchTab('home');
   document.querySelectorAll('#occasion-chips .chip').forEach(c => c.classList.remove('active'));
   const matchingChip = document.querySelector(`#occasion-chips .chip[data-occasion="${look.tag}"]`);
-  if (matchingChip) matchingChip.classList.add('active');
+  if (matchingChip) {
+    if (matchingChip.dataset.occasion === 'Everyday' || matchingChip.dataset.occasion === 'Other') {
+      document.querySelectorAll('#occasion-chips .chip').forEach(c => {
+        if (c.dataset.occasion === 'Everyday' || c.dataset.occasion === 'Other') c.classList.remove('hidden');
+      });
+      document.getElementById('occasion-more-btn').textContent = '▴ Fewer options';
+    }
+    matchingChip.classList.add('active');
+  }
   state.occasion = look.tag;
-  document.getElementById('products-input').value = look.products;
 }
 
 document.getElementById('look-detail-overlay').addEventListener('click', (e) => {
@@ -1886,39 +1928,23 @@ Keep it warm and concise. Plain text only, no markdown, no asterisks, no headers
   }
 });
 
-// ---------- Scan products photo ----------
-document.getElementById('scan-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const statusEl = document.getElementById('scan-status');
-  statusEl.textContent = 'Scanning…';
-
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(',')[1];
-    try {
-      const text = await callClaude([
-        { type: "image", source: { type: "base64", media_type: file.type || "image/jpeg", data: base64 } },
-        { type: "text", text: "List only the makeup/skincare product names visible in this photo, comma separated, lowercase, nothing else. If you can't identify any, respond with 'none found'." }
-      ]);
-      const found = text.trim();
-      if (found && !found.toLowerCase().includes('none found')) {
-        const input = document.getElementById('products-input');
-        input.value = input.value ? (input.value + ', ' + found) : found;
-        statusEl.textContent = 'Found it — added below ✓';
-      } else {
-        statusEl.textContent = "Couldn't spot anything, add them manually";
-      }
-    } catch (err) {
-      statusEl.textContent = 'Scan failed, try typing instead';
-    }
-  };
-  reader.readAsDataURL(file);
+// ---------- Occasion: expand to show the rest of the options ----------
+document.getElementById('occasion-more-btn').addEventListener('click', () => {
+  const btn = document.getElementById('occasion-more-btn');
+  document.querySelectorAll('#occasion-chips .chip').forEach(c => {
+    if (c.dataset.occasion === 'Everyday' || c.dataset.occasion === 'Other') c.classList.toggle('hidden');
+  });
+  const nowHidden = document.querySelector('#occasion-chips .chip[data-occasion="Everyday"]').classList.contains('hidden');
+  btn.textContent = nowHidden ? '▾ More options' : '▴ Fewer options';
 });
 
 // ---------- Start: generate steps ----------
+function renderNeededProducts(){
+  document.getElementById('needed-products-list').innerHTML = state.neededProducts
+    .map(p => `<span class="needed-product-tag">${escapeHtml(p)}</span>`).join('');
+}
+
 document.getElementById('start-btn').addEventListener('click', async () => {
-  state.products = document.getElementById('products-input').value.trim();
   const errEl = document.getElementById('setup-error');
   errEl.textContent = '';
 
@@ -1926,32 +1952,33 @@ document.getElementById('start-btn').addEventListener('click', async () => {
   document.getElementById('loading-screen').classList.remove('hidden');
   setTabbarVisible(false);
 
-  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}".
-They have these products available: ${state.products ? state.products : "(none listed — assume a complete basic beginner kit: moisturizer, primer, concealer, foundation, blush, mascara, brow gel, tinted lip balm, setting spray)"}.
+  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.
 
-Create a complete, ordered makeup routine. Every product they listed must be used in at least one step of its own — never skip or merge two of their products into a single step. Also fill in the standard routine steps they didn't mention a product for (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) using a general product type for each of those. The total number of steps should follow naturally from how many products they have — a longer product list means more steps, a short one means fewer. There is no fixed step count. For each step give:
+Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. There is no fixed step count; use as many steps as the look genuinely needs.
+
+First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. For each step give:
 - "title": 3-5 words
 - "instructions": one encouraging, beginner-friendly sentence on how to do it
-- "product": the product used for that step
+- "product": the product used for that step (must match one of the productsNeeded entries)
 - "zone": exactly one of: "forehead", "brows", "eyelids", "under-eyes", "cheeks", "nose", "lips", "jawline", "chin", "all-over" — pick whichever face area this product actually goes on
 - "markerCount": a whole number 1-6 for how many placement dots to show (e.g. blush is usually 4 — two per cheek, concealer is usually 2 — one under each eye, lipstick is usually 1)
 - "diagramNote": a very short (under 8 words) label describing the placement, e.g. "2 dots each cheek, blend up"
 - "color": a hex color code (e.g. "#C81E4B") for roughly what this product's shade looks like — a red lipstick gets a red, a nude concealer a warm beige, a black mascara near-black, a pink blush a pink, etc. Best guess is fine.
 
 Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
-{"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":"","color":""}]}`;
+{"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":"","color":""}]}`;
 
   try {
     const raw = await callClaude([{ type: "text", text: prompt }]);
     const parsed = JSON.parse(stripFences(raw));
     state.steps = parsed.steps || [];
+    state.neededProducts = parsed.productsNeeded || [];
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('occasion-pill').textContent = state.occasion;
-    renderStepTrack();
-    renderStep();
-    document.getElementById('live-screen').classList.remove('hidden');
+    renderNeededProducts();
+    document.getElementById('shopping-list-screen').classList.remove('hidden');
   } catch (err) {
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('setup-screen').classList.remove('hidden');
@@ -1960,17 +1987,25 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
   }
 });
 
+document.getElementById('shopping-list-continue').addEventListener('click', () => {
+  document.getElementById('shopping-list-screen').classList.add('hidden');
+  renderStepTrack();
+  renderStep();
+  document.getElementById('live-screen').classList.remove('hidden');
+});
+
 // ---------- Back / restart ----------
 function resetToSetup(){
   stopCamera();
   document.getElementById('live-screen').classList.add('hidden');
+  document.getElementById('shopping-list-screen').classList.add('hidden');
   document.getElementById('done-screen').classList.add('hidden');
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('feedback-card').classList.remove('show');
-  document.getElementById('scan-status').textContent = '';
   setTabbarVisible(true);
 }
 document.getElementById('back-btn').addEventListener('click', resetToSetup);
+document.getElementById('shopping-list-back').addEventListener('click', resetToSetup);
 document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 
 // ---------- Save completed look ----------
@@ -1979,7 +2014,7 @@ document.getElementById('save-look-btn').addEventListener('click', () => {
   routines.unshift({
     id: 'r_' + Date.now(),
     occasion: state.occasion,
-    products: state.products,
+    products: state.neededProducts,
     steps: state.steps,
     savedAt: new Date().toISOString(),
   });
@@ -2035,7 +2070,7 @@ function saveReviewedLook(){
   routines.unshift({
     id: 'r_' + Date.now(),
     occasion: state.occasion,
-    products: state.products,
+    products: state.neededProducts,
     steps: state.steps,
     savedAt: new Date().toISOString(),
     photo: reviewPhotoDataUrl || '',
@@ -2175,6 +2210,7 @@ function renderStep(){
   document.getElementById('step-instructions').textContent = step.instructions;
   document.getElementById('step-product').textContent = step.product;
   document.getElementById('feedback-card').classList.remove('show');
+  document.getElementById('substitute-result').classList.add('hidden');
   document.getElementById('prev-btn').disabled = state.currentStep === 0;
   document.getElementById('next-btn').disabled = state.currentStep === state.steps.length - 1;
   updateStepTrack();
@@ -2236,6 +2272,29 @@ function speak(text){
   utter.pitch = 1.0;
   window.speechSynthesis.speak(utter);
 }
+
+// ---------- Don't have a product? Get a quick substitute suggestion ----------
+document.getElementById('substitute-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('substitute-btn');
+  const resultEl = document.getElementById('substitute-result');
+  const step = state.steps[state.currentStep];
+
+  btn.disabled = true;
+  btn.textContent = 'Finding a swap…';
+  resultEl.classList.remove('hidden');
+  resultEl.textContent = 'Thinking of an alternative…';
+
+  try {
+    const prompt = `A beginner doesn't have "${step.product}" for this makeup step: "${step.title}" — ${step.instructions}. Suggest ONE common alternative product they likely already own that could work instead, and a one-sentence tip on using it that way. Keep it to 2 short sentences total, plain text, no markdown, no asterisks.`;
+    const text = await callClaude([{ type: "text", text: prompt }]);
+    resultEl.textContent = text.trim();
+  } catch (err) {
+    resultEl.textContent = "Couldn't find a swap — try again.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔁 Don't have this? Get a swap";
+  }
+});
 
 async function checkProgress(){
   const btn = document.getElementById('check-btn');
