@@ -679,6 +679,9 @@
     text-align:center; margin-top:14px; line-height:1.5;
   }
 
+  /* ---------- finish & review ---------- */
+  .review-photo{ width:100%; border-radius:14px; border:2px solid var(--line); display:block; margin-bottom:10px; }
+
   /* ---------- chat widget ---------- */
   .chat-fab-wrap{ position:fixed; inset:0; max-width:480px; margin:0 auto; pointer-events:none; z-index:45; }
   .chat-fab{
@@ -984,6 +987,7 @@
         <button class="check-btn" id="check-btn">✨ Check my progress</button>
         <button class="nav-btn" id="next-btn" aria-label="Next step">›</button>
       </div>
+      <button class="ghost-btn" id="finish-review-btn">🏁 Finish &amp; review</button>
     </div>
 
     <!-- LOADING (step generation) -->
@@ -1119,6 +1123,31 @@
       <p class="acct-subtitle" id="checkout-cardinfo" style="margin-top:6px;text-align:center;display:block;"></p>
       <button class="ghost-btn" id="checkout-cancel" style="margin-top:20px;">Cancel Pro (preview)</button>
     </div>
+  </div>
+</div>
+
+<div class="look-detail-overlay hidden" id="review-overlay">
+  <div class="look-detail-card">
+    <button class="look-detail-close" id="review-close" aria-label="Close">✕</button>
+    <span class="eyebrow">Finish &amp; review</span>
+    <h2 class="look-name" style="font-size:22px;margin:8px 0 4px;">How did it turn out?</h2>
+    <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:18px;">Snap a photo of the finished look and jot down how it went — it'll be saved with this guide in your account.</p>
+
+    <div id="review-photo-empty">
+      <button class="ghost-btn" id="review-capture-btn" style="margin-top:0;">📸 Capture from camera</button>
+    </div>
+    <div class="hidden" id="review-photo-wrap">
+      <img class="review-photo" id="review-photo-img" alt="Captured look">
+      <button class="ghost-btn" id="review-retake-btn">Retake photo</button>
+    </div>
+
+    <div class="checkout-field" style="margin-top:18px;">
+      <span class="field-label">Description</span>
+      <textarea class="review-textarea" id="review-desc-input" maxlength="400" placeholder="How did you find it? Anything you'd change next time?"></textarea>
+    </div>
+
+    <button class="primary-btn" id="review-save-btn">Save to my guides</button>
+    <button class="ghost-btn" id="review-skip-btn">Skip photo &amp; description, just save</button>
   </div>
 </div>
 
@@ -1542,6 +1571,8 @@ function renderAccountView(){
           <button class="acct-remove" data-remove-routine="${r.id}" aria-label="Remove">✕</button>
         </div>
         <div class="routine-steps hidden" id="routine-steps-${r.id}">
+          ${r.photo && r.photo.startsWith('data:image/') ? `<img class="review-photo" src="${r.photo}" alt="Saved look">` : ''}
+          ${r.description ? `<p class="routine-step" style="font-style:italic;">${escapeHtml(r.description)}</p>` : ''}
           ${r.steps.map((s,i) => `<div class="routine-step"><b>${i+1}. ${escapeHtml(s.title)}</b><span>${escapeHtml(s.instructions)}</span></div>`).join('')}
         </div>
       </div>
@@ -1870,6 +1901,72 @@ document.getElementById('save-look-btn').addEventListener('click', () => {
   btn.disabled = true;
 });
 
+// ---------- Finish & review: capture a photo + description, save with the routine ----------
+let reviewPhotoDataUrl = '';
+
+function openReviewOverlay(){
+  reviewPhotoDataUrl = '';
+  document.getElementById('review-photo-empty').classList.remove('hidden');
+  document.getElementById('review-photo-wrap').classList.add('hidden');
+  document.getElementById('review-desc-input').value = '';
+  document.getElementById('review-overlay').classList.remove('hidden');
+}
+document.getElementById('finish-review-btn').addEventListener('click', openReviewOverlay);
+document.getElementById('review-close').addEventListener('click', () => {
+  document.getElementById('review-overlay').classList.add('hidden');
+});
+document.getElementById('review-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'review-overlay') e.target.classList.add('hidden');
+});
+
+async function captureReviewPhoto(){
+  if (!state.stream) {
+    await startCamera();
+    if (!state.stream) return;
+  }
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const maxDim = 480;
+  const scale = Math.min(1, maxDim / Math.max(video.videoWidth || maxDim, video.videoHeight || maxDim));
+  canvas.width = Math.round((video.videoWidth || maxDim) * scale);
+  canvas.height = Math.round((video.videoHeight || maxDim) * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1); // un-mirror, same true orientation as the "check my progress" capture
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  reviewPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+  document.getElementById('review-photo-img').src = reviewPhotoDataUrl;
+  document.getElementById('review-photo-empty').classList.add('hidden');
+  document.getElementById('review-photo-wrap').classList.remove('hidden');
+}
+document.getElementById('review-capture-btn').addEventListener('click', captureReviewPhoto);
+document.getElementById('review-retake-btn').addEventListener('click', captureReviewPhoto);
+
+function saveReviewedLook(){
+  const routines = getRoutines();
+  routines.unshift({
+    id: 'r_' + Date.now(),
+    occasion: state.occasion,
+    products: state.products,
+    steps: state.steps,
+    savedAt: new Date().toISOString(),
+    photo: reviewPhotoDataUrl || '',
+    description: document.getElementById('review-desc-input').value.trim(),
+  });
+  setRoutines(routines);
+
+  document.getElementById('review-overlay').classList.add('hidden');
+  document.getElementById('live-screen').classList.add('hidden');
+  document.getElementById('done-screen').classList.remove('hidden');
+  stopCamera();
+  setTabbarVisible(true);
+  const saveBtn = document.getElementById('save-look-btn');
+  saveBtn.textContent = 'Saved ✓';
+  saveBtn.disabled = true;
+}
+document.getElementById('review-save-btn').addEventListener('click', saveReviewedLook);
+document.getElementById('review-skip-btn').addEventListener('click', saveReviewedLook);
+
 // ---------- Camera ----------
 async function startCamera(){
   try{
@@ -2013,19 +2110,28 @@ document.getElementById('next-btn').addEventListener('click', () => {
   }
 });
 
-// ---------- Voice: pick the calmest available female English voice ----------
+// ---------- Voice: pick the calmest, highest-quality available female English voice ----------
 let preferredVoice = null;
 function pickPreferredVoice(){
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
+  const englishVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+  const pool = englishVoices.length ? englishVoices : voices;
   const preferredNames = ['samantha', 'ava', 'serena', 'moira', 'allison', 'susan', 'karen', 'zira', 'victoria', 'fiona', 'google uk english female'];
+
+  // A device's "enhanced"/"premium"/"neural" voice variant (when downloaded) sounds
+  // noticeably less robotic than the default compact one of the same name.
   for (const name of preferredNames){
-    const match = voices.find(v => v.lang.toLowerCase().startsWith('en') && v.name.toLowerCase().includes(name));
+    const enhanced = pool.find(v => v.name.toLowerCase().includes(name) && /enhanced|premium|neural/i.test(v.name));
+    if (enhanced) return enhanced;
+  }
+  for (const name of preferredNames){
+    const match = pool.find(v => v.name.toLowerCase().includes(name));
     if (match) return match;
   }
-  const femaleGuess = voices.find(v => v.lang.toLowerCase().startsWith('en') && /female/i.test(v.name));
+  const femaleGuess = pool.find(v => /female/i.test(v.name));
   if (femaleGuess) return femaleGuess;
-  return voices.find(v => v.lang.toLowerCase().startsWith('en')) || voices[0];
+  return pool[0] || voices[0];
 }
 if ('speechSynthesis' in window) {
   preferredVoice = pickPreferredVoice();
@@ -2038,7 +2144,7 @@ function speak(text){
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   if (preferredVoice) utter.voice = preferredVoice;
-  utter.rate = 0.94;
+  utter.rate = 0.92;
   utter.pitch = 1.0;
   window.speechSynthesis.speak(utter);
 }
