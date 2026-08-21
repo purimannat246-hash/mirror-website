@@ -189,6 +189,32 @@
   }
   .occasion-other::placeholder{ color:var(--muted); font-weight:500; }
   .occasion-other:focus{ border-color:var(--pink); }
+  .active-look-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:2px solid var(--pink);
+    border-radius:12px;
+    padding:10px 12px;
+    margin-bottom:14px;
+    font-family:'Karla', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .active-look-badge b{ color:var(--pink); font-family:'Unbounded', sans-serif; font-weight:700; }
+  .active-look-badge button{
+    margin-left:auto;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Karla', sans-serif;
+    font-weight:700;
+    font-size:11px;
+    cursor:pointer;
+    text-decoration:underline;
+  }
 
   .occasion-more{
     display:block;
@@ -913,6 +939,7 @@
       <button class="occasion-more" id="occasion-more-btn">▾ More options</button>
       <input class="occasion-other hidden" id="occasion-other-input" type="text" maxlength="60" placeholder="Tell me the occasion — e.g. prom, photoshoot, wedding guest">
 
+      <div class="active-look-badge hidden" id="active-look-badge"></div>
       <button class="primary-btn" id="start-btn">Start my live guide</button>
       <p class="error-line" id="setup-error"></p>
 
@@ -1303,6 +1330,7 @@
 <script>
 const state = {
   occasion: 'School',
+  lookStyle: null,
   neededProducts: [],
   steps: [],
   currentStep: 0,
@@ -1597,6 +1625,19 @@ function useLookAsGuide(look){
     matchingChip.classList.add('active');
   }
   state.occasion = look.tag;
+  state.lookStyle = { name: look.name, desc: look.desc, products: look.products };
+  showActiveLookBadge();
+}
+
+function showActiveLookBadge(){
+  const badge = document.getElementById('active-look-badge');
+  if (!state.lookStyle) { badge.classList.add('hidden'); return; }
+  badge.innerHTML = `<span>✨ Building your <b>${escapeHtml(state.lookStyle.name)}</b> look</span><button id="clear-look-style-btn">clear</button>`;
+  badge.classList.remove('hidden');
+  document.getElementById('clear-look-style-btn').addEventListener('click', () => {
+    state.lookStyle = null;
+    showActiveLookBadge();
+  });
 }
 
 document.getElementById('look-detail-overlay').addEventListener('click', (e) => {
@@ -1867,6 +1908,8 @@ function setupChipGroup(containerId, onSelect){
 
 setupChipGroup('occasion-chips', (val) => {
   const otherInput = document.getElementById('occasion-other-input');
+  state.lookStyle = null;
+  showActiveLookBadge();
   if (val === 'Other') {
     otherInput.classList.remove('hidden');
     otherInput.focus();
@@ -1953,9 +1996,13 @@ document.getElementById('start-btn').addEventListener('click', async () => {
   document.getElementById('loading-screen').classList.remove('hidden');
   setTabbarVisible(false);
 
-  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.
+  const styleContext = state.lookStyle
+    ? `\n\nThey specifically picked this look from the gallery: "${state.lookStyle.name}" — ${state.lookStyle.desc} Build the routine around that exact style (the same intensity, colors, and technique it describes) rather than a generic version of the occasion. Typical products for this look: ${state.lookStyle.products}.`
+    : '';
 
-Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. There is no fixed step count; use as many steps as the look genuinely needs.
+  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.${styleContext}
+
+Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion${state.lookStyle ? ' and the specific look described above' : ''}. There is no fixed step count; use as many steps as the look genuinely needs.
 
 First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. For each step give:
 - "title": 3-5 words
@@ -1977,7 +2024,7 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
     document.getElementById('loading-screen').classList.add('hidden');
-    document.getElementById('occasion-pill').textContent = state.occasion;
+    document.getElementById('occasion-pill').textContent = state.lookStyle ? state.lookStyle.name : state.occasion;
     renderNeededProducts();
     document.getElementById('shopping-list-screen').classList.remove('hidden');
   } catch (err) {
