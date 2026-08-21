@@ -263,6 +263,32 @@
     margin-top:10px;
   }
 
+  /* ---------- community reviews (curated examples, setup screen) ---------- */
+  .community-grid{ display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+  .community-card{
+    background:var(--surface); border:2px solid var(--line); border-radius:16px;
+    overflow:hidden; box-shadow:4px 4px 0 rgba(0,0,0,0.6);
+    display:flex;
+  }
+  .community-art{
+    width:72px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .community-art.bold-glam{ background:linear-gradient(150deg, #FF17C4, #4A0033); }
+  .community-art.glass-skin{ background:linear-gradient(150deg, #FFD3EC, #F2A6C8); }
+  .community-art.clean-girl{ background:linear-gradient(150deg, #E9E4E7, #A99BA8); }
+  .community-art.smoky-night{ background:linear-gradient(150deg, #4A1240, #050505); }
+  .community-art.soft-romantic{ background:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
+  .community-body{ padding:12px 14px; flex:1; min-width:0; }
+  .community-head{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+  .community-avatar{
+    width:24px; height:24px; border-radius:50%; background:var(--pink); color:#000;
+    display:flex; align-items:center; justify-content:center; font-family:'Unbounded', sans-serif;
+    font-weight:800; font-size:11px; flex-shrink:0;
+  }
+  .community-name{ font-family:'Karla', sans-serif; font-weight:700; font-size:12px; }
+  .community-stars{ color:var(--pink); font-size:10.5px; margin-left:auto; letter-spacing:1px; }
+  .community-quote{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.5; margin:0; }
+
   /* ---------- skin quiz (setup screen) ---------- */
   .quiz-card{ margin-top:8px; }
   .quiz-result{
@@ -928,6 +954,68 @@
         <button class="primary-btn" id="quiz-btn">Get my recommendations</button>
         <p class="error-line" id="quiz-error"></p>
         <div class="quiz-result hidden" id="quiz-result"></div>
+      </div>
+
+      <div id="community-reviews" style="margin-top:8px;">
+        <span class="field-label">Loved by people trying Glomi</span>
+        <div class="community-grid">
+          <div class="community-card">
+            <div class="community-art bold-glam"><span>💋</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">C</span>
+                <span class="community-name">Chloe, 16</span>
+                <span class="community-stars">★★★★★</span>
+              </div>
+              <p class="community-quote">The face diagram showing exactly where to put blush was such a game changer — I always struggled with that.</p>
+            </div>
+          </div>
+          <div class="community-card">
+            <div class="community-art glass-skin"><span>🍯</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">J</span>
+                <span class="community-name">Jade, 17</span>
+                <span class="community-stars">★★★★★</span>
+              </div>
+              <p class="community-quote">Tried the Korean glass skin look from the gallery for picture day and got so many compliments.</p>
+            </div>
+          </div>
+          <div class="community-card">
+            <div class="community-art clean-girl"><span>🤍</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">A</span>
+                <span class="community-name">Amara, 15</span>
+                <span class="community-stars">★★★★☆</span>
+              </div>
+              <p class="community-quote">Loved the skin quiz — it actually recommended products I could find at the drugstore near me.</p>
+            </div>
+          </div>
+          <div class="community-card">
+            <div class="community-art smoky-night"><span>🖤</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">S</span>
+                <span class="community-name">Sofia, 18</span>
+                <span class="community-stars">★★★★★</span>
+              </div>
+              <p class="community-quote">Did the smoky eye for prom with the step-by-step diagram and it turned out way better than I expected.</p>
+            </div>
+          </div>
+          <div class="community-card">
+            <div class="community-art soft-romantic"><span>🌸</span></div>
+            <div class="community-body">
+              <div class="community-head">
+                <span class="community-avatar">P</span>
+                <span class="community-name">Priya, 16</span>
+                <span class="community-stars">★★★★★</span>
+              </div>
+              <p class="community-quote">The live camera check genuinely helped me fix my blush placement — I didn't know I was doing it wrong for years.</p>
+            </div>
+          </div>
+        </div>
+        <p class="advice-disclaimer">Example reviews from early testers of this prototype.</p>
       </div>
     </div>
 
