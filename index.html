@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Glomi — your live makeup guide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800;900&family=Karla:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #050505;
@@ -17,7 +17,7 @@
     --line: #000000;
     --good: #8FD97D;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     background: var(--bg);
@@ -26,6 +26,7 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
+  button, .chip, .tab-btn, .look-card, .look-save, .chat-fab{ touch-action:manipulation; }
   h1,h2,h3, .display{
     font-family:'Unbounded', sans-serif;
     font-weight:700;
@@ -1676,9 +1677,10 @@ Create a complete, ordered makeup routine. Every product they listed must be use
 - "zone": exactly one of: "forehead", "brows", "eyelids", "under-eyes", "cheeks", "nose", "lips", "jawline", "chin", "all-over" — pick whichever face area this product actually goes on
 - "markerCount": a whole number 1-6 for how many placement dots to show (e.g. blush is usually 4 — two per cheek, concealer is usually 2 — one under each eye, lipstick is usually 1)
 - "diagramNote": a very short (under 8 words) label describing the placement, e.g. "2 dots each cheek, blend up"
+- "color": a hex color code (e.g. "#C81E4B") for roughly what this product's shade looks like — a red lipstick gets a red, a nude concealer a warm beige, a black mascara near-black, a pink blush a pink, etc. Best guess is fine.
 
 Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
-{"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":""}]}`;
+{"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":"","color":""}]}`;
 
   try {
     const raw = await callClaude([{ type: "text", text: prompt }]);
@@ -1796,12 +1798,14 @@ function renderFaceDiagram(step){
   const zone = step.zone && zoneCoords[step.zone] ? step.zone : 'all-over';
   const count = Math.min(Math.max(parseInt(step.markerCount) || 1, 1), 6);
   const points = getMarkerPoints(zone, count);
+  const markerColor = /^#[0-9a-fA-F]{6}$/.test(step.color || '') ? step.color : null;
   points.forEach(([x, y], i) => {
     const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     c.setAttribute('cx', x);
     c.setAttribute('cy', y);
     c.setAttribute('r', 5.5);
     c.setAttribute('class', 'diagram-marker');
+    if (markerColor) c.style.fill = markerColor;
     c.style.opacity = '0';
     c.style.transition = `opacity 0.25s ease ${i * 0.06}s`;
     group.appendChild(c);
@@ -1869,13 +1873,33 @@ document.getElementById('next-btn').addEventListener('click', () => {
   }
 });
 
+// ---------- Voice: pick the calmest available female English voice ----------
+let preferredVoice = null;
+function pickPreferredVoice(){
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const preferredNames = ['samantha', 'ava', 'serena', 'moira', 'allison', 'susan', 'karen', 'zira', 'victoria', 'fiona', 'google uk english female'];
+  for (const name of preferredNames){
+    const match = voices.find(v => v.lang.toLowerCase().startsWith('en') && v.name.toLowerCase().includes(name));
+    if (match) return match;
+  }
+  const femaleGuess = voices.find(v => v.lang.toLowerCase().startsWith('en') && /female/i.test(v.name));
+  if (femaleGuess) return femaleGuess;
+  return voices.find(v => v.lang.toLowerCase().startsWith('en')) || voices[0];
+}
+if ('speechSynthesis' in window) {
+  preferredVoice = pickPreferredVoice();
+  window.speechSynthesis.onvoiceschanged = () => { preferredVoice = pickPreferredVoice(); };
+}
+
 // ---------- Check my progress (live vision feedback) ----------
 function speak(text){
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 1.0;
-  utter.pitch = 1.05;
+  if (preferredVoice) utter.voice = preferredVoice;
+  utter.rate = 0.94;
+  utter.pitch = 1.0;
   window.speechSynthesis.speak(utter);
 }
 
