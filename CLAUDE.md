@@ -60,3 +60,16 @@ There is no `package.json`, no dependency manifest, and no test/lint/build tooli
 - All Claude prompts request a specific, strict output contract (plain text for coaching feedback, fenced-free JSON for step generation) and the client code parses that contract directly — if you change a prompt's expected output shape, update the corresponding parsing code (`stripFences`/`JSON.parse` for steps, plain `.trim()` for feedback text) in the same change.
 - `api/claude.js` is intentionally a dumb passthrough (no prompt logic, no validation beyond method/error checks) — put all prompt engineering in `index.html`, not in the serverless function.
 - Any AI-generated or user-typed text that gets inserted via `.innerHTML` (chat bubbles, saved-routine steps, reviews, the face-diagram caption) must go through `escapeHtml()` first — `.textContent`/`.value` assignments don't need it, since those never parse HTML. This matters more than it looks like it should: `state.occasion` in particular went from a fixed set of chip labels to free-typed text once the "Other" occasion field was added, so anywhere it's rendered as markup needs the same treatment.
+
+## Agents
+
+`.claude/agents/` holds six project subagents, each scoped to one part of the site. They exist because the whole app is one 2,700-line `index.html`, so "which part of the file am I allowed to touch, and what breaks if I get it wrong" is the thing worth writing down. Each definition carries the conventions that matter for its area — delegate to the matching one rather than re-explaining the file:
+
+- **`mannat-ui`** — markup and CSS: the tab bar, screens, cards, overlays, spacing, the `:root` design tokens.
+- **`mannat-prompts`** — every prompt string and the code that parses its response (step generation, face scan, chat, feedback, quiz, swaps), plus `api/claude.js`. Owns the rule that a prompt and its parser change together.
+- **`mannat-camera`** — `getUserMedia` streams, frame capture/un-mirroring, `zoneCoords` and the SVG face diagram, step navigation, speech narration.
+- **`mannat-account`** — `localStorage` persistence, the Free-vs-Pro limits, the preview checkout sheet.
+- **`mannat-content`** — copy and static data: `LOOKS`, `ADVICE`, the example review cards, brand quotes, disclaimers.
+- **`mannat-review`** — read-only diff reviewer for the checklist above (escaping, prompt/parser sync, camera cleanup, storage safety, honest-prototype copy).
+
+The boundaries overlap in two known places, and both are called out in the definitions themselves: a new face zone needs both `zoneCoords` (camera) and the step-generation prompt (prompts), and a new look variant needs both the `LOOKS` entry (content) and two CSS gradient rules (ui). An agent that hits one of those reports it back rather than reaching across.
