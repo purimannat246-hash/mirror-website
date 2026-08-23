@@ -1482,33 +1482,46 @@ function tracePath(ctx, pts, closed){
   }
 }
 
-// All three use 'multiply' blend + a soft blur so the color tints the video's existing skin
-// texture/shading instead of sitting on top as a flat painted patch -- the single biggest lever
-// for realism available in 2D canvas without a trained blend model.
+// All three tint with 'color' blend (see the note inside drawTryonEyeshadow() for why) so the
+// makeup color takes over hue/saturation while the video's own skin lighting and texture keep
+// showing through underneath, plus a soft blur on the main fill so the edge doesn't read as a
+// flat painted patch -- the single biggest lever for realism available in 2D canvas without a
+// trained blend model. Liners stay on 'multiply' since they're meant to read as genuinely darker
+// pigment, not a hue shift.
 function drawTryonLips(ctx, points, w, h, color, scale){
   const outerPx = TRYON_LIPS_OUTER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
   const innerPx = TRYON_LIPS_INNER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
   const blur = Math.max(1.5, scale * 0.045);
+  // 'color' blend (hue+saturation from the fill, lightness kept from whatever's already on the
+  // canvas) instead of 'multiply' -- this is the actual technique behind a "tinted into the skin"
+  // look: every highlight, shadow and texture crease already on the lips still shows through
+  // exactly as before, just recolored, instead of getting flattened under a uniform darkening
+  // wash. It's also mathematically incapable of crushing toward black regardless of alpha or how
+  // dark the source color is, since luminosity is linear in RGB and 'color' blend always keeps
+  // the backdrop's luminosity exactly -- see the note in drawTryonEyeshadow() for why that matters.
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
-  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalCompositeOperation = 'color';
   ctx.beginPath();
   tracePath(ctx, outerPx, true);
   // The inner mouth loop is added to the same path with an even-odd fill, which punches the
   // mouth opening back out -- otherwise an open mouth gets painted straight over the teeth.
   tracePath(ctx, innerPx, true);
-  ctx.fillStyle = hexToRgba(color, 0.75);
+  ctx.fillStyle = hexToRgba(color, 0.9);
   ctx.fill('evenodd');
   ctx.restore();
 
   // A thin darker liner along the outer edge -- a flat fill alone reads as a color-fill tool, not
-  // lipstick; real lip products (and lip filters) always carry a slightly deeper edge line.
+  // lipstick; real lip products (and lip filters) always carry a slightly deeper edge line. Stays
+  // on 'multiply' (a liner should read as genuinely darker pigment, not just a hue shift), with a
+  // luminance-based cap so a very dark lip color can't push the liner itself toward solid black.
+  const linerAlpha = Math.min(0.4, 0.16 + hexLuminance(color) * 0.28);
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
   tracePath(ctx, outerPx, true);
   ctx.lineWidth = Math.max(1, scale * 0.018);
-  ctx.strokeStyle = hexToRgbaDarken(color, 0.55, 0.5);
+  ctx.strokeStyle = hexToRgbaDarken(color, 0.55, linerAlpha);
   ctx.stroke();
   ctx.restore();
 
@@ -1538,19 +1551,25 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   const up = eyeUpVector(points, eye.corner1, eye.corner2);
   const bottom = upperPts.map(p => ({ x: p.x * w, y: p.y * h }));
 
-  // A dark "Party" shade at even moderate alpha, drawn with 'multiply', can still crush toward
-  // solid black -- multiply always darkens toward the fill color regardless of alpha, so stacking
-  // passes (as an earlier version did) compounds that darkening pass over pass. Fixed here to a
-  // single non-stacked fill, with peak opacity capped by how dark the source color already is so a
-  // near-black shade never reads as an opaque block.
-  const peakAlpha = Math.min(0.4, 0.16 + hexLuminance(color) * 0.32);
+  // 'color' blend instead of 'multiply' for the main wash -- same technique as the lips: it takes
+  // hue/saturation from the fill but keeps the eyelid's own lighting, shading and creases, so the
+  // shadow reads as blended-on rather than a flat painted patch. It's also structurally incapable
+  // of crushing to black: canvas 'color' blend always resolves to SetLum(fill, Lum(backdrop)), and
+  // because luminosity is a linear function of RGB, any alpha-weighted mix of the backdrop with a
+  // same-luminosity result keeps that exact luminosity too -- the result can only get as dark as
+  // the video pixel underneath already was, never darker, no matter the fill color or alpha. That's
+  // the actual fix for the old "solid black blocks" bug: 'multiply' has no such guarantee (it
+  // darkens toward the fill color regardless of alpha, which is exactly what crushed to black
+  // before), so the fix isn't just capping opacity -- it's using a blend mode that can't do that
+  // in the first place. The peak below can stay flat now instead of luminance-scaled.
+  const peakAlpha = 0.62;
   const lift = scale * 0.62;
   const blur = Math.max(1.5, scale * 0.07);
   const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
   const loop = bottom.concat(top.slice().reverse());
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
-  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalCompositeOperation = 'color';
   ctx.beginPath();
   tracePath(ctx, loop, true);
   const midBottom = bottom[Math.floor(bottom.length / 2)];
@@ -1587,10 +1606,14 @@ function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
   // lot of devices and is one of the most expensive things you can do per frame; cutting one of
   // the ~5 blurred fills this loop was doing every frame (2 cheeks + 2 eyes + lips) measurably
   // helps frame rate on weaker phones, which is what jittery/laggy tracking actually comes from.
-  ctx.globalCompositeOperation = 'multiply';
+  // 'color' blend (see drawTryonEyeshadow() for the full reasoning) instead of 'multiply' -- keeps
+  // the cheek's own lighting/shading showing through the tint instead of just darkening it, which
+  // reads as a real flush of color rather than a grey-ish shadow, and lets the peak alpha go up
+  // safely since this blend mode can't crush toward black regardless of alpha.
+  ctx.globalCompositeOperation = 'color';
   const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-  grad.addColorStop(0, hexToRgba(color, 0.5));
-  grad.addColorStop(0.7, hexToRgba(color, 0.25));
+  grad.addColorStop(0, hexToRgba(color, 0.6));
+  grad.addColorStop(0.7, hexToRgba(color, 0.32));
   grad.addColorStop(1, hexToRgba(color, 0));
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
