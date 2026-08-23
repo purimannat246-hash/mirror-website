@@ -612,18 +612,19 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:30px;
+    background-size:cover;
+    background-position:center;
     border-bottom:2px solid var(--line);
   }
-  .look-art.detail{ height:130px; border-radius:14px; border:2px solid var(--line); margin-bottom:14px; font-size:44px; }
-  .look-art.mini{ height:auto; width:52px; aspect-ratio:1/1; border-radius:10px; border:2px solid var(--line); font-size:20px; flex-shrink:0; }
-  .look-art.bold-glam{ background:linear-gradient(150deg, #FF17C4, #4A0033); }
-  .look-art.clean-girl{ background:linear-gradient(150deg, #E9E4E7, #A99BA8); }
-  .look-art.golden-hour{ background:linear-gradient(150deg, #F2B84B, #4A2F0A); }
+  .look-art.detail{ height:170px; border-radius:14px; border:2px solid var(--line); margin-bottom:14px; }
+  .look-art.mini{ height:auto; width:52px; aspect-ratio:1/1; border-radius:10px; border:2px solid var(--line); flex-shrink:0; }
+  .look-art.bold-glam{ background-image:url('images/looks/bold-glam.jpg'); }
+  .look-art.clean-girl{ background-image:url('images/looks/clean-girl.jpg'); background-position:center 30%; }
+  .look-art.golden-hour{ background-image:url('images/looks/golden-hour.jpg'); }
   .look-pro-badge{
     position:absolute; top:8px; left:8px; z-index:2;
     font-family:'IBM Plex Mono', monospace; font-size:9px; font-weight:700; letter-spacing:0.05em;
-    background:var(--ink); color:#000; padding:3px 7px; border-radius:5px;
+    background:#000; color:#fff; padding:3px 7px; border-radius:5px;
   }
 
   .look-save{
