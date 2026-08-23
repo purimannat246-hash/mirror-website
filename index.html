@@ -1334,21 +1334,26 @@ Match the intensity, finish, and product choices to what this occasion actually 
 Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. Use however many steps the look genuinely needs, typically 8-11, and never more than 12.
 
 First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. Keep every field short — this is read on a phone screen, not an essay. For each step give:
-- "title": 3-5 words
-- "instructions": one short, encouraging sentence (max 20 words) on how to do it
+- "title": 2-4 words
+- "instructions": one short, encouraging sentence (max 15 words) on how to do it
 - "product": the product used for that step (must match one of the productsNeeded entries)
 - "zone": exactly one of: "forehead", "brows", "eyelids", "under-eyes", "cheeks", "nose", "lips", "jawline", "chin", "all-over" — pick whichever face area this product actually goes on
-- "markerCount": a whole number 1-6 for how many placement dots to show (e.g. blush is usually 4 — two per cheek, concealer is usually 2 — one under each eye, lipstick is usually 1)
-- "diagramNote": a very short (under 8 words) label describing the placement, e.g. "2 dots each cheek, blend up"
 - "color": a hex color code (e.g. "#C81E4B") for roughly what this product's shade looks like — a red lipstick gets a red, a nude concealer a warm beige, a black mascara near-black, a pink blush a pink, etc. Best guess is fine.
 
 Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
-{"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":"","color":""}]}`;
+{"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","color":""}]}`;
 
   try {
     const raw = await callClaude([{ type: "text", text: prompt }], FAST_TEXT_MODEL);
     const parsed = JSON.parse(stripFences(raw));
-    state.steps = parsed.steps || [];
+    state.steps = (parsed.steps || []).map(step => {
+      // markerCount/diagramNote used to be asked of the model too -- pure boilerplate
+      // (a placement dot count and a caption derived directly from the zone), so
+      // computing them from ZONE_DEFAULTS instead trims two fields off every step the
+      // model has to write, which is real output (and time) saved on every single guide.
+      const meta = ZONE_DEFAULTS[step.zone] || ZONE_DEFAULTS['all-over'];
+      return { ...step, markerCount: meta.count, diagramNote: `${meta.count} dot${meta.count === 1 ? '' : 's'} ${meta.phrase}` };
+    });
     state.neededProducts = parsed.productsNeeded || [];
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
@@ -1576,9 +1581,12 @@ function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
   const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
   const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
   const r = scale * 0.8;
-  const blur = Math.max(2, scale * 0.08);
   ctx.save();
-  ctx.filter = `blur(${blur}px)`;
+  // No ctx.filter blur here -- the radial gradient below already fades to zero alpha on its own,
+  // so a canvas blur() pass on top was pure redundant cost. Canvas blur() runs in software on a
+  // lot of devices and is one of the most expensive things you can do per frame; cutting one of
+  // the ~5 blurred fills this loop was doing every frame (2 cheeks + 2 eyes + lips) measurably
+  // helps frame rate on weaker phones, which is what jittery/laggy tracking actually comes from.
   ctx.globalCompositeOperation = 'multiply';
   const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
   grad.addColorStop(0, hexToRgba(color, 0.5));
@@ -1706,7 +1714,14 @@ async function startTryonPreview(){
   // both at once instead of one after the other -- the model was also likely already prefetched
   // during step generation, so this usually just awaits an already-finished (or nearly finished)
   // promise rather than starting a fresh multi-second download here.
-  const cameraPromise = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+  // With no size constraint, phones commonly hand back 1080p+ video -- every frame of that then
+  // gets run through face detection AND several multiply/blur canvas fills, for a result that's
+  // ultimately displayed in a ~260px circle. Capping the request to something in that ballpark
+  // cuts detection + draw cost a lot (roughly with the pixel count) with no visible quality loss
+  // at this display size, and is the main fix for laggy/jittery tracking on weaker phones.
+  const cameraPromise = navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } }
+  });
   const landmarkerPromise = prefetchTryonLandmarker();
 
   try {
@@ -1917,6 +1932,23 @@ const zoneCoords = {
   'jawline':    [[72,186],[128,186]],
   'chin':       [[100,199]],
   'all-over':   [[78,90],[122,90],[100,128],[58,138],[142,138],[100,163]],
+};
+
+// Default placement-dot count and diagram caption per zone -- used to fill in
+// markerCount/diagramNote for every step without asking the model for them (see startGuide()).
+// `phrase` already includes its own preposition (some zones read as "on X", others as "under X"/
+// "along X") so it can be dropped straight into "N dots {phrase}" without a mismatched "on".
+const ZONE_DEFAULTS = {
+  'forehead':   { count: 1, phrase: 'on the forehead' },
+  'brows':      { count: 2, phrase: 'on both brows' },
+  'eyelids':    { count: 2, phrase: 'on both eyelids' },
+  'under-eyes': { count: 2, phrase: 'under both eyes' },
+  'cheeks':     { count: 4, phrase: 'on both cheeks' },
+  'nose':       { count: 1, phrase: 'on the nose' },
+  'lips':       { count: 1, phrase: 'on the lips' },
+  'jawline':    { count: 2, phrase: 'along the jawline' },
+  'chin':       { count: 1, phrase: 'on the chin' },
+  'all-over':   { count: 1, phrase: 'all over the face' },
 };
 
 function getMarkerPoints(zone, count){
