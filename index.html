@@ -618,11 +618,8 @@
   .look-art.detail{ height:130px; border-radius:14px; border:2px solid var(--line); margin-bottom:14px; font-size:44px; }
   .look-art.mini{ height:auto; width:52px; aspect-ratio:1/1; border-radius:10px; border:2px solid var(--line); font-size:20px; flex-shrink:0; }
   .look-art.bold-glam{ background:linear-gradient(150deg, #FF17C4, #4A0033); }
-  .look-art.glass-skin{ background:linear-gradient(150deg, #FFD3EC, #F2A6C8); }
   .look-art.clean-girl{ background:linear-gradient(150deg, #E9E4E7, #A99BA8); }
-  .look-art.smoky-night{ background:linear-gradient(150deg, #4A1240, #050505); }
   .look-art.soft-romantic{ background:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
-  .look-art.editorial-pop{ background:linear-gradient(150deg, #FF17C4, #FF8A00); }
   .look-art.golden-hour{ background:linear-gradient(150deg, #F2B84B, #4A2F0A); }
   .look-art.vampy-night{ background:linear-gradient(150deg, #6B0F2B, #1A0208); }
   .look-pro-badge{
@@ -666,11 +663,8 @@
   .look-featured .look-desc{ color:rgba(255,255,255,0.78); font-size:12px; -webkit-line-clamp:2; max-width:34ch; }
   .look-featured .look-save{ z-index:2; }
   .look-featured.bold-glam{ background-image:linear-gradient(150deg, #FF17C4, #4A0033); }
-  .look-featured.glass-skin{ background-image:linear-gradient(150deg, #FFD3EC, #F2A6C8); }
   .look-featured.clean-girl{ background-image:linear-gradient(150deg, #E9E4E7, #A99BA8); }
-  .look-featured.smoky-night{ background-image:linear-gradient(150deg, #4A1240, #050505); }
   .look-featured.soft-romantic{ background-image:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
-  .look-featured.editorial-pop{ background-image:linear-gradient(150deg, #FF17C4, #FF8A00); }
   .look-featured.golden-hour{ background-image:linear-gradient(150deg, #F2B84B, #4A2F0A); }
   .look-featured.vampy-night{ background-image:linear-gradient(150deg, #6B0F2B, #1A0208); }
 
@@ -1031,7 +1025,7 @@
   <div id="looks-view" class="hidden">
     <span class="eyebrow">Get inspired</span>
     <h1 class="headline">Browse looks.</h1>
-    <p class="sub">Tap a look to see how it's built, or heart it to save for later.</p>
+    <p class="sub">Try something new — every look is an easy, step-by-step guide.</p>
     <div id="looks-grid"></div>
   </div>
 
@@ -1412,21 +1406,12 @@ const LOOKS = [
   { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam',
     desc:'Winged liner, a bold lip, and glow that reads from across the room.',
     products:'liquid eyeliner, bold red lipstick, highlighter, mascara' },
-  { id:'glass-skin', name:'Korean Glass Skin', tag:'Everyday', art:'glass-skin',
-    desc:'Dewy, translucent skin with soft gradient lips — barely-there but glowing.',
-    products:'hydrating primer, cushion foundation, cream blush, tinted lip balm' },
   { id:'clean-girl', name:'Clean Girl', tag:'School', art:'clean-girl',
     desc:'Minimal, skin-first, glossy — five minutes and out the door.',
     products:'concealer, brow gel, lip oil, mascara' },
-  { id:'smoky-night', name:'Smoky Night Out', tag:'Party', art:'smoky-night',
-    desc:'Dark, blended smoky eyes with a contoured, sculpted finish.',
-    products:'dark eyeshadow palette, eyeliner, bronzer, nude lipstick' },
   { id:'soft-romantic', name:'Soft Romantic', tag:'Date', art:'soft-romantic',
     desc:"Flushed cheeks, soft pink lids, a lip that looks bitten not painted.",
     products:'pink blush, shimmer eyeshadow, tinted lip balm, mascara' },
-  { id:'editorial-pop', name:'Editorial Pop', tag:'Other', art:'editorial-pop',
-    desc:'Graphic liner or a bold color moment — makeup as a statement.',
-    products:'colored eyeliner, bold eyeshadow, setting spray' },
   { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour', pro:true,
     desc:'Warm bronze eyes, a glowing highlight, and a golden-toned lip — like you caught the last bit of sunset.',
     products:'bronzer, gold eyeshadow, cream highlighter, warm-toned lipstick' },
