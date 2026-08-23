@@ -8,14 +8,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #050505;
-    --surface: #121014;
-    --surface-2: #1A171C;
-    --ink: #FFFFFF;
-    --muted: #8F8593;
+    --bg: #FFFFFF;
+    --surface: #FFDDEF;
+    --surface-2: #FFF2F8;
+    --ink: #000000;
+    --muted: #8A7480;
     --pink: #FF17C4;
     --line: #000000;
-    --good: #8FD97D;
+    --good: #2E9E52;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -33,30 +33,6 @@
     letter-spacing:-0.01em;
   }
 
-  /* ---------- decorative background stickers ---------- */
-  .bg-stickers{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:0;
-    overflow:hidden;
-  }
-  .bg-sticker{
-    position:absolute;
-    font-size:34px;
-    opacity:0.16;
-    text-shadow:2px 2px 0 rgba(0,0,0,0.4);
-  }
-  .bg-sticker.s1{ top:6%; left:4%; transform:rotate(-18deg); font-size:40px; }
-  .bg-sticker.s2{ top:14%; right:5%; transform:rotate(14deg); }
-  .bg-sticker.s3{ top:48%; left:3%; transform:rotate(10deg); font-size:30px; }
-  .bg-sticker.s4{ top:62%; right:4%; transform:rotate(-12deg); font-size:38px; }
-  .bg-sticker.s5{ bottom:8%; left:6%; transform:rotate(-8deg); }
-  .bg-sticker.s6{ bottom:16%; right:6%; transform:rotate(16deg); font-size:32px; }
-  @media (max-width:640px){
-    .bg-stickers{ display:none; }
-  }
-
   .app{
     position:relative;
     z-index:1;
@@ -66,25 +42,6 @@
     min-height:100vh;
   }
   /* ---------- header ---------- */
-  .brand{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:14px;
-  }
-  .brand-name{
-    font-family:'Unbounded', sans-serif;
-    font-weight:700;
-    font-size:20px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .brand-dot{
-    width:9px;height:9px;border-radius:50%;
-    background:var(--pink);
-    box-shadow:0 0 12px var(--pink);
-  }
   .price-pill{
     font-family:'IBM Plex Mono', monospace;
     font-size:10.5px;
@@ -96,14 +53,21 @@
     padding:6px 10px;
     border-radius:8px;
   }
-  .brand-quote{
-    font-family:'Karla', sans-serif;
-    font-style:italic;
-    font-weight:600;
-    font-size:12.5px;
-    color:var(--muted);
-    text-align:center;
-    margin:0 0 22px;
+  .price-banner{
+    display:flex;
+    justify-content:center;
+    margin-bottom:24px;
+  }
+  .price-pill-highlight{
+    font-family:'Unbounded', sans-serif;
+    font-size:12px;
+    font-weight:700;
+    color:#000;
+    background:var(--pink);
+    border:2px solid var(--line);
+    padding:9px 16px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 rgba(0,0,0,0.6);
   }
   /* ---------- shared setup-style bits (reused by Looks/Advice/Account headers) ---------- */
   .eyebrow{
@@ -119,6 +83,7 @@
     border-radius:6px;
     margin-bottom:18px;
   }
+  .eyebrow-below{ margin-top:14px; }
   .headline{
     font-size:32px;
     line-height:1.28;
@@ -310,15 +275,7 @@
     overflow:hidden; box-shadow:4px 4px 0 rgba(0,0,0,0.6);
     display:flex;
   }
-  .community-art{
-    width:72px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px;
-  }
-  .community-art.bold-glam{ background:linear-gradient(150deg, #FF17C4, #4A0033); }
-  .community-art.glass-skin{ background:linear-gradient(150deg, #FFD3EC, #F2A6C8); }
-  .community-art.clean-girl{ background:linear-gradient(150deg, #E9E4E7, #A99BA8); }
-  .community-art.smoky-night{ background:linear-gradient(150deg, #4A1240, #050505); }
-  .community-art.soft-romantic{ background:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
-  .community-body{ padding:12px 14px; flex:1; min-width:0; }
+  .community-body{ padding:14px 16px; flex:1; min-width:0; }
   .community-head{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
   .community-avatar{
     width:24px; height:24px; border-radius:50%; background:var(--pink); color:#000;
@@ -328,20 +285,6 @@
   .community-name{ font-family:'Karla', sans-serif; font-weight:700; font-size:12px; }
   .community-stars{ color:var(--pink); font-size:10.5px; margin-left:auto; letter-spacing:1px; }
   .community-quote{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.5; margin:0; }
-
-  /* ---------- skin quiz (setup screen) ---------- */
-  .quiz-card{ margin-top:28px; }
-  .quiz-result{
-    background:var(--surface-2);
-    border:2px solid var(--pink);
-    border-radius:14px;
-    padding:14px 16px;
-    margin-top:14px;
-    font-size:13px;
-    font-weight:500;
-    line-height:1.65;
-    white-space:pre-line;
-  }
 
   /* ---------- live screen ---------- */
   .live-header{
@@ -645,7 +588,7 @@
     padding:6px 4px;
     border-radius:10px;
   }
-  .tab-icon{ font-size:19px; }
+  .tab-icon svg{ width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
   .tab-label{ font-family:'Karla', sans-serif; font-size:10px; font-weight:700; }
   .tab-btn.active{ color:var(--pink); }
 
@@ -692,9 +635,11 @@
     position:absolute; top:8px; right:8px;
     width:28px; height:28px; border-radius:50%;
     background:rgba(0,0,0,0.5); border:1.5px solid var(--line);
-    font-size:13px; display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:center; justify-content:center;
     cursor:pointer;
   }
+  .look-save svg{ width:15px; height:15px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .look-save.saved svg{ fill:var(--pink); stroke:var(--pink); }
   .look-body{ padding:12px; }
   .look-tag{
     font-family:'IBM Plex Mono', monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
@@ -746,7 +691,7 @@
     overflow-y:auto;
   }
   .look-detail-close{
-    position:absolute; top:16px; right:16px;
+    position:absolute; top:16px; right:16px; z-index:2;
     width:30px; height:30px; border-radius:50%;
     background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
     font-size:13px; cursor:pointer;
@@ -785,9 +730,11 @@
     position:absolute; right:16px; bottom:96px; pointer-events:auto;
     width:52px; height:52px; border-radius:50%;
     background:var(--pink); color:#000; border:2px solid var(--line);
-    font-size:21px; display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:center; justify-content:center;
     cursor:pointer; box-shadow:3px 3px 0 rgba(0,0,0,0.6);
   }
+  .chat-fab svg{ width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .chat-send svg{ width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .chat-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; transform:translateZ(0); }
   .chat-overlay.hidden{ display:none; }
   .chat-card{
@@ -837,7 +784,8 @@
   .chat-input::placeholder{ color:var(--muted); }
   .chat-send{
     width:44px; border-radius:12px; border:2px solid var(--line);
-    background:var(--pink); color:#000; font-size:16px; cursor:pointer;
+    background:var(--pink); color:#000; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
   }
   .chat-send:disabled{ opacity:0.5; }
 
@@ -859,31 +807,8 @@
     margin-bottom:16px;
     box-shadow:4px 4px 0 rgba(0,0,0,0.6);
   }
-  .acct-header{ display:flex; align-items:center; gap:12px; margin-bottom:6px; }
-  .acct-avatar{
-    width:48px; height:48px; border-radius:50%;
-    background:var(--pink); color:#000;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Unbounded', sans-serif; font-weight:800; font-size:18px;
-    border:2px solid var(--line); flex-shrink:0;
-  }
   .acct-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; margin:0 0 3px; }
   .acct-subtitle{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
-  .acct-field{ margin-top:14px; }
-  .acct-input{
-    width:100%;
-    background:transparent;
-    border:none;
-    border-bottom:2px solid var(--line);
-    color:var(--ink);
-    font-family:'Karla', sans-serif;
-    font-weight:600;
-    font-size:14px;
-    padding:8px 2px;
-    outline:none;
-  }
-  .acct-input:focus{ border-bottom-color:var(--pink); }
-  .acct-input::placeholder{ color:var(--muted); font-weight:500; }
 
   .sub-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
   .acct-manage-btn{
@@ -935,31 +860,20 @@
 </head>
 <body>
 
-<div class="bg-stickers" id="bg-stickers" aria-hidden="true">
-  <span class="bg-sticker s1">💄</span>
-  <span class="bg-sticker s2">✨</span>
-  <span class="bg-sticker s3">💅</span>
-  <span class="bg-sticker s4">🖌️</span>
-  <span class="bg-sticker s5">🪞</span>
-  <span class="bg-sticker s6">🤍</span>
-</div>
-
 <div class="app">
 
-  <div class="brand">
-    <div class="brand-name"><span class="brand-dot"></span>glomi</div>
-    <div class="price-pill">from €5/mo · pay per look</div>
+  <div class="price-banner">
+    <span class="price-pill price-pill-highlight">From €5/mo · pay per look</span>
   </div>
-  <p class="brand-quote" id="brand-quote"></p>
 
   <!-- ================= HOME TAB ================= -->
   <div id="home-view">
 
     <!-- SETUP SCREEN -->
     <div id="setup-screen">
-      <span class="eyebrow">Prototype · core feature</span>
-      <h1 class="headline">Choose a look.</h1>
-      <p class="sub">Pick what you're getting ready for and I'll build the whole routine — I'll tell you what you need, and swap anything you don't have.</p>
+      <h1 class="headline">Your own personal makeup guide.</h1>
+      <span class="eyebrow eyebrow-below">Choose a look</span>
+      <p class="sub">Pick an occasion — I'll build the whole routine for you.</p>
 
       <span class="field-label">Occasion</span>
       <div class="chips" id="occasion-chips">
@@ -976,53 +890,11 @@
       <button class="primary-btn" id="start-btn">Start my live guide</button>
       <p class="error-line" id="setup-error"></p>
 
-      <!-- SKIN QUIZ -->
-      <div class="acct-card quiz-card">
-        <p class="acct-title">Not sure what to get?</p>
-        <p class="acct-subtitle" style="margin:6px 0 14px;">Take our 30-second skin quiz for picks and brand ideas</p>
-
-        <span class="field-label">Skin type</span>
-        <div class="chips" id="quiz-skin-type">
-          <div class="chip" data-value="Oily"><span class="chip-icon">💧</span>Oily</div>
-          <div class="chip" data-value="Dry"><span class="chip-icon">🍂</span>Dry</div>
-          <div class="chip" data-value="Combination"><span class="chip-icon">🌗</span>Combo</div>
-          <div class="chip" data-value="Normal"><span class="chip-icon">🌱</span>Normal</div>
-        </div>
-
-        <span class="field-label">Skin tone</span>
-        <div class="chips" id="quiz-skin-tone">
-          <div class="chip" data-value="Fair">Fair</div>
-          <div class="chip" data-value="Light">Light</div>
-          <div class="chip" data-value="Medium">Medium</div>
-          <div class="chip" data-value="Tan">Tan</div>
-          <div class="chip" data-value="Deep">Deep</div>
-        </div>
-
-        <span class="field-label">Main concern</span>
-        <div class="chips" id="quiz-concern">
-          <div class="chip" data-value="Acne &amp; blemishes"><span class="chip-icon">🎯</span>Acne</div>
-          <div class="chip" data-value="Dryness"><span class="chip-icon">🍂</span>Dryness</div>
-          <div class="chip" data-value="Dullness"><span class="chip-icon">✨</span>Dullness</div>
-          <div class="chip" data-value="None in particular"><span class="chip-icon">🙂</span>None</div>
-        </div>
-
-        <span class="field-label">Budget</span>
-        <div class="chips" id="quiz-budget">
-          <div class="chip" data-value="Affordable drugstore"><span class="chip-icon">🛒</span>Budget</div>
-          <div class="chip" data-value="Mid-range"><span class="chip-icon">💳</span>Mid</div>
-          <div class="chip" data-value="Splurge-worthy"><span class="chip-icon">💎</span>Splurge</div>
-        </div>
-
-        <button class="primary-btn" id="quiz-btn">Get my recommendations</button>
-        <p class="error-line" id="quiz-error"></p>
-        <div class="quiz-result hidden" id="quiz-result"></div>
-      </div>
 
       <div id="community-reviews" style="margin-top:8px;">
         <span class="field-label">Loved by people trying Glomi</span>
         <div class="community-grid">
           <div class="community-card">
-            <div class="community-art bold-glam"><span>💋</span></div>
             <div class="community-body">
               <div class="community-head">
                 <span class="community-avatar">C</span>
@@ -1033,40 +905,6 @@
             </div>
           </div>
           <div class="community-card">
-            <div class="community-art glass-skin"><span>🍯</span></div>
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">J</span>
-                <span class="community-name">Jade, 17</span>
-                <span class="community-stars">★★★★★</span>
-              </div>
-              <p class="community-quote">Tried the Korean glass skin look from the gallery for picture day and got so many compliments.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-art smoky-night"><span>🖤</span></div>
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">M</span>
-                <span class="community-name">Maya, 17</span>
-                <span class="community-stars">★★☆☆☆</span>
-              </div>
-              <p class="community-quote">The live camera feedback felt pretty generic for me half the time, and it lagged a bit on my older phone. The diagrams are nice though.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-art clean-girl"><span>🤍</span></div>
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">A</span>
-                <span class="community-name">Amara, 15</span>
-                <span class="community-stars">★★★★☆</span>
-              </div>
-              <p class="community-quote">Loved the skin quiz — it actually recommended products I could find at the drugstore near me.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-art smoky-night"><span>🖤</span></div>
             <div class="community-body">
               <div class="community-head">
                 <span class="community-avatar">S</span>
@@ -1077,7 +915,6 @@
             </div>
           </div>
           <div class="community-card">
-            <div class="community-art glass-skin"><span>🍯</span></div>
             <div class="community-body">
               <div class="community-head">
                 <span class="community-avatar">E</span>
@@ -1088,14 +925,13 @@
             </div>
           </div>
           <div class="community-card">
-            <div class="community-art soft-romantic"><span>🌸</span></div>
             <div class="community-body">
               <div class="community-head">
-                <span class="community-avatar">P</span>
-                <span class="community-name">Priya, 16</span>
-                <span class="community-stars">★★★★★</span>
+                <span class="community-avatar">M</span>
+                <span class="community-name">Maya, 17</span>
+                <span class="community-stars">★★☆☆☆</span>
               </div>
-              <p class="community-quote">The live camera check genuinely helped me fix my blush placement — I didn't know I was doing it wrong for years.</p>
+              <p class="community-quote">The live camera feedback felt pretty generic for me half the time, and it lagged a bit on my older phone. The diagrams are nice though.</p>
             </div>
           </div>
         </div>
@@ -1127,8 +963,8 @@
         <h2 class="step-title" id="step-title">—</h2>
         <p class="step-instructions" id="step-instructions">—</p>
         <span class="step-product" id="step-product">—</span>
-        <button class="speak-toggle on" id="speak-toggle">🔊 Read steps aloud</button>
-        <button class="substitute-btn" id="substitute-btn">🔁 Don't have this? Get a swap</button>
+        <button class="speak-toggle on" id="speak-toggle">Read steps aloud</button>
+        <button class="substitute-btn" id="substitute-btn">Don't have this? Get a swap</button>
         <div class="substitute-result hidden" id="substitute-result"></div>
       </div>
 
@@ -1158,10 +994,10 @@
 
       <div class="live-actions">
         <button class="nav-btn" id="prev-btn" aria-label="Previous step">‹</button>
-        <button class="check-btn" id="check-btn">✨ Check my progress</button>
+        <button class="check-btn" id="check-btn">Check my progress</button>
         <button class="nav-btn" id="next-btn" aria-label="Next step">›</button>
       </div>
-      <button class="ghost-btn" id="finish-review-btn">🏁 Finish &amp; review</button>
+      <button class="ghost-btn" id="finish-review-btn">Finish &amp; review</button>
     </div>
 
     <!-- LOADING (step generation) -->
@@ -1182,9 +1018,9 @@
     <!-- DONE SCREEN -->
     <div id="done-screen" class="hidden done-screen">
       <span class="eyebrow">All done</span>
-      <h1 class="headline">You're ready. ✨</h1>
+      <h1 class="headline">You're ready.</h1>
       <p class="sub">That's the full look. Save it to your account, or start another.</p>
-      <button class="ghost-btn" id="save-look-btn">💾 Save this look</button>
+      <button class="ghost-btn" id="save-look-btn">Save this look</button>
       <p class="error-line" id="save-limit-note"></p>
       <button class="ghost-btn" id="restart-btn">Start another look</button>
     </div>
@@ -1203,24 +1039,6 @@
   <div id="account-view" class="hidden">
     <span class="eyebrow">Your account</span>
     <h1 class="headline">Account.</h1>
-
-    <div class="acct-card">
-      <div class="acct-header">
-        <div class="acct-avatar" id="acct-avatar">G</div>
-        <div>
-          <p class="acct-title">Profile</p>
-          <p class="acct-subtitle">Stored on this device</p>
-        </div>
-      </div>
-      <div class="acct-field">
-        <span class="field-label">Name</span>
-        <input class="acct-input" id="acct-name-input" type="text" maxlength="60" placeholder="Your name">
-      </div>
-      <div class="acct-field">
-        <span class="field-label">Email</span>
-        <input class="acct-input" id="acct-email-input" type="email" maxlength="100" placeholder="you@email.com">
-      </div>
-    </div>
 
     <div class="acct-card">
       <p class="acct-title">Subscription</p>
@@ -1271,8 +1089,12 @@
 
     <div id="checkout-form">
       <div class="checkout-field">
-        <span class="field-label">Name on card</span>
+        <span class="field-label">Name</span>
         <input class="checkout-input" id="cc-name" type="text" maxlength="60" placeholder="Full name" autocomplete="cc-name">
+      </div>
+      <div class="checkout-field">
+        <span class="field-label">Email</span>
+        <input class="checkout-input" id="cc-email" type="email" maxlength="100" placeholder="you@email.com" autocomplete="email">
       </div>
       <div class="checkout-field">
         <span class="field-label">Card number</span>
@@ -1290,11 +1112,11 @@
       </div>
       <button class="primary-btn" id="checkout-submit">Subscribe — €5/mo</button>
       <p class="error-line" id="checkout-error"></p>
-      <p class="checkout-note">Prototype checkout — nothing you type here is sent anywhere or stored. Real billing is coming soon.</p>
+      <p class="checkout-note">Prototype checkout — your name and email are saved on this device so Pro can recognize you; your card number and CVC are never stored, only the last 4 digits. Real billing is coming soon.</p>
     </div>
 
     <div class="checkout-success hidden" id="checkout-success">
-      <p style="font-size:40px;margin:0 0 10px;text-align:center;">✨</p>
+      <svg viewBox="0 0 24 24" style="width:40px;height:40px;display:block;margin:0 auto 10px;stroke:var(--pink);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>
       <p class="acct-title" style="font-size:17px;text-align:center;">You're on Glomi Pro</p>
       <p class="acct-subtitle" id="checkout-cardinfo" style="margin-top:6px;text-align:center;display:block;"></p>
       <button class="ghost-btn" id="checkout-cancel" style="margin-top:20px;">Cancel Pro (preview)</button>
@@ -1310,7 +1132,7 @@
     <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:18px;">Snap a photo of the finished look and jot down how it went — it'll be saved with this guide in your account.</p>
 
     <div id="review-photo-empty">
-      <button class="ghost-btn" id="review-capture-btn" style="margin-top:0;">📸 Capture from camera</button>
+      <button class="ghost-btn" id="review-capture-btn" style="margin-top:0;">Capture from camera</button>
     </div>
     <div class="hidden" id="review-photo-wrap">
       <img class="review-photo" id="review-photo-img" alt="Captured look">
@@ -1329,7 +1151,7 @@
 </div>
 
 <div class="chat-fab-wrap" id="chat-fab-wrap">
-  <button class="chat-fab" id="chat-fab" aria-label="Chat with Glomi">💬</button>
+  <button class="chat-fab" id="chat-fab" aria-label="Chat with Glomi"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4v-4H4Z"/></svg></button>
 </div>
 
 <div class="chat-overlay hidden" id="chat-overlay">
@@ -1344,15 +1166,15 @@
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-input-row">
       <input class="chat-input" id="chat-input" type="text" maxlength="300" placeholder="Ask about a product, a look, your skin…">
-      <button class="chat-send" id="chat-send">➤</button>
+      <button class="chat-send" id="chat-send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
   </div>
 </div>
 
 <nav class="tabbar" id="tabbar">
-  <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
-  <button class="tab-btn" data-tab="looks"><span class="tab-icon">💫</span><span class="tab-label">Looks</span></button>
-  <button class="tab-btn" data-tab="account"><span class="tab-icon">👤</span><span class="tab-label">Account</span></button>
+  <button class="tab-btn active" data-tab="home"><span class="tab-icon"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V19a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1V9.5"/></svg></span><span class="tab-label">Home</span></button>
+  <button class="tab-btn" data-tab="looks"><span class="tab-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="13" height="13" rx="2.5"/><path d="M8 21h10a2 2 0 0 0 2-2V8"/></svg></span><span class="tab-label">Looks</span></button>
+  <button class="tab-btn" data-tab="account"><span class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.6 7.5-6.6s7.5 2.5 7.5 6.6"/></svg></span><span class="tab-label">Account</span></button>
 </nav>
 
 <script>
@@ -1403,15 +1225,6 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ---------- Brand quote strip ----------
-const BRAND_QUOTES = [
-  "Glow is a mood, not a size.",
-  "Confidence is your best highlighter.",
-  "Progress, not perfection — every face is a first draft.",
-  "Soft skin, loud lip, main character energy.",
-  "You don't need it all — just what makes you feel like you.",
-];
-document.getElementById('brand-quote').textContent = BRAND_QUOTES[Math.floor(Math.random() * BRAND_QUOTES.length)];
 
 // ---------- Local storage helpers (account/favourites/routines/reviews live on this device only) ----------
 function loadJSON(key, fallback){
@@ -1480,18 +1293,8 @@ const CHAT_SUGGESTIONS = [
   "What's a good skincare routine for oily skin?",
   "Best drugstore concealer for beginners?",
   "How do I do a simple smoky eye?",
-  "What look works for a first date?",
-  "How can I calm a breakout before an event?",
   "What's the right order to apply makeup?",
   "How do I pick a foundation shade that matches?",
-  "What brushes do I actually need as a beginner?",
-  "How do I make my makeup last all day?",
-  "What's a good everyday routine for school?",
-  "How do I fix my eyeliner if it goes wrong?",
-  "Is it bad to sleep with makeup on?",
-  "What's a good going-out look that's still easy?",
-  "How do I stop my lipstick from feathering?",
-  "What products should I avoid mixing?",
 ];
 
 function renderChatMessages(){
@@ -1539,11 +1342,9 @@ function closeChatOverlay(){
   overlay.classList.add('hidden');
   overlay.style.height = '';
   overlay.style.transform = '';
-  document.getElementById('bg-stickers').classList.remove('hidden');
 }
 document.getElementById('chat-fab').addEventListener('click', () => {
   document.getElementById('chat-overlay').classList.remove('hidden');
-  document.getElementById('bg-stickers').classList.add('hidden');
   renderChatMessages();
   renderChatUsageNote();
   syncChatOverlayHeight();
@@ -1608,28 +1409,28 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
 
 // ---------- Curated look gallery ----------
 const LOOKS = [
-  { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam', icon:'💋',
+  { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam',
     desc:'Winged liner, a bold lip, and glow that reads from across the room.',
     products:'liquid eyeliner, bold red lipstick, highlighter, mascara' },
-  { id:'glass-skin', name:'Korean Glass Skin', tag:'Everyday', art:'glass-skin', icon:'🍯',
+  { id:'glass-skin', name:'Korean Glass Skin', tag:'Everyday', art:'glass-skin',
     desc:'Dewy, translucent skin with soft gradient lips — barely-there but glowing.',
     products:'hydrating primer, cushion foundation, cream blush, tinted lip balm' },
-  { id:'clean-girl', name:'Clean Girl', tag:'School', art:'clean-girl', icon:'🤍',
+  { id:'clean-girl', name:'Clean Girl', tag:'School', art:'clean-girl',
     desc:'Minimal, skin-first, glossy — five minutes and out the door.',
     products:'concealer, brow gel, lip oil, mascara' },
-  { id:'smoky-night', name:'Smoky Night Out', tag:'Party', art:'smoky-night', icon:'🖤',
+  { id:'smoky-night', name:'Smoky Night Out', tag:'Party', art:'smoky-night',
     desc:'Dark, blended smoky eyes with a contoured, sculpted finish.',
     products:'dark eyeshadow palette, eyeliner, bronzer, nude lipstick' },
-  { id:'soft-romantic', name:'Soft Romantic', tag:'Date', art:'soft-romantic', icon:'🌸',
+  { id:'soft-romantic', name:'Soft Romantic', tag:'Date', art:'soft-romantic',
     desc:"Flushed cheeks, soft pink lids, a lip that looks bitten not painted.",
     products:'pink blush, shimmer eyeshadow, tinted lip balm, mascara' },
-  { id:'editorial-pop', name:'Editorial Pop', tag:'Other', art:'editorial-pop', icon:'🎨',
+  { id:'editorial-pop', name:'Editorial Pop', tag:'Other', art:'editorial-pop',
     desc:'Graphic liner or a bold color moment — makeup as a statement.',
     products:'colored eyeliner, bold eyeshadow, setting spray' },
-  { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour', icon:'🌟', pro:true,
+  { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour', pro:true,
     desc:'Warm bronze eyes, a glowing highlight, and a golden-toned lip — like you caught the last bit of sunset.',
     products:'bronzer, gold eyeshadow, cream highlighter, warm-toned lipstick' },
-  { id:'vampy-night', name:'Vampy Night', tag:'Party', art:'vampy-night', icon:'🍷', pro:true,
+  { id:'vampy-night', name:'Vampy Night', tag:'Party', art:'vampy-night', pro:true,
     desc:'Deep berry and wine tones with a matte finish — dramatic, moody, unapologetically bold.',
     products:'deep berry lipstick, matte eyeshadow, dark eyeliner, setting powder' },
 ];
@@ -1643,8 +1444,7 @@ function renderLooksGrid(){
     <div class="look-card" data-look-id="${look.id}">
       <div class="look-art ${look.art}">
         ${look.pro ? '<span class="look-pro-badge">PRO</span>' : ''}
-        <span>${look.icon}</span>
-        <button class="look-save" data-look-id="${look.id}" aria-label="Save look">${favorites.includes(look.id) ? '💖' : '🤍'}</button>
+        <button class="look-save${favorites.includes(look.id) ? ' saved' : ''}" data-look-id="${look.id}" aria-label="Save look"><svg viewBox="0 0 24 24"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7 17 3 13.4 3 9.4 3 6.6 5.2 4.5 7.9 4.5c1.5 0 3 .7 4 1.9a5.4 5.4 0 0 1 4-1.9c2.7 0 4.9 2.1 4.9 4.9 0 4-4 7.6-8.2 10.8-.2.2-.5.3-.8.3Z"/></svg></button>
       </div>
       <div class="look-body">
         <span class="look-tag">${look.tag}</span>
@@ -1657,7 +1457,7 @@ function renderLooksGrid(){
   grid.innerHTML = `
     <div class="looks-featured-wrap">
       <div class="look-featured ${featured.art}" data-look-id="${featured.id}">
-        <button class="look-save" data-look-id="${featured.id}" aria-label="Save look">${favorites.includes(featured.id) ? '💖' : '🤍'}</button>
+        <button class="look-save${favorites.includes(featured.id) ? ' saved' : ''}" data-look-id="${featured.id}" aria-label="Save look"><svg viewBox="0 0 24 24"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7 17 3 13.4 3 9.4 3 6.6 5.2 4.5 7.9 4.5c1.5 0 3 .7 4 1.9a5.4 5.4 0 0 1 4-1.9c2.7 0 4.9 2.1 4.9 4.9 0 4-4 7.6-8.2 10.8-.2.2-.5.3-.8.3Z"/></svg></button>
         <div class="look-featured-body">
           <span class="look-tag">${featured.tag}</span>
           <h3 class="look-name">${featured.name}</h3>
@@ -1698,7 +1498,7 @@ function openLookDetail(lookId){
   overlay.innerHTML = `
     <div class="look-detail-card">
       <button class="look-detail-close" id="look-detail-close" aria-label="Close">✕</button>
-      <div class="look-art ${look.art} detail"><span>${look.icon}</span></div>
+      <div class="look-art ${look.art} detail"></div>
       <span class="look-tag">${look.tag}</span>
       ${look.pro ? '<span class="look-pro-badge" style="position:static;display:inline-block;margin-left:6px;">PRO</span>' : ''}
       <h2 class="look-name" style="font-size:22px;">${look.name}</h2>
@@ -1710,7 +1510,7 @@ function openLookDetail(lookId){
         <span class="field-label">Suggested products</span>
         <p class="look-products">${look.products}</p>
         <button class="primary-btn" id="use-look-btn">Use this look → start guide</button>
-        <button class="ghost-btn" id="fav-look-btn">${isSaved ? '💖 Saved to favourites' : '🤍 Save to favourites'}</button>
+        <button class="ghost-btn" id="fav-look-btn">${isSaved ? 'Saved to favourites' : 'Save to favourites'}</button>
       `}
     </div>
   `;
@@ -1754,7 +1554,7 @@ function useLookAsGuide(look){
 function showActiveLookBadge(){
   const badge = document.getElementById('active-look-badge');
   if (!state.lookStyle) { badge.classList.add('hidden'); return; }
-  badge.innerHTML = `<span>✨ Building your <b>${escapeHtml(state.lookStyle.name)}</b> look</span><button id="clear-look-style-btn">clear</button>`;
+  badge.innerHTML = `<span>Building your <b>${escapeHtml(state.lookStyle.name)}</b> look</span><button id="clear-look-style-btn">clear</button>`;
   badge.classList.remove('hidden');
   document.getElementById('clear-look-style-btn').addEventListener('click', () => {
     state.lookStyle = null;
@@ -1769,10 +1569,6 @@ document.getElementById('look-detail-overlay').addEventListener('click', (e) => 
 // ---------- Account view ----------
 function renderAccountView(){
   const account = getAccount();
-  document.getElementById('acct-name-input').value = account.name || '';
-  document.getElementById('acct-email-input').value = account.email || '';
-  document.getElementById('acct-avatar').textContent = (account.name || 'G').trim().charAt(0).toUpperCase() || 'G';
-
   const isPro = account.plan === 'pro';
   document.getElementById('sub-plan-pill').textContent = isPro
     ? `Glomi Pro · •••• ${account.cardLast4 || '····'}`
@@ -1788,7 +1584,7 @@ function renderAccountView(){
       const look = LOOKS.find(l => l.id === id);
       if (!look) return '';
       return `<div class="acct-fav-row" data-look-id="${look.id}">
-        <div class="look-art ${look.art} mini"><span>${look.icon}</span></div>
+        <div class="look-art ${look.art} mini"></div>
         <div class="acct-fav-info"><b>${look.name}</b><span>${look.tag}</span></div>
         <button class="acct-remove" data-look-id="${look.id}" aria-label="Remove">✕</button>
       </div>`;
@@ -1844,14 +1640,7 @@ function renderAccountView(){
     : `<p class="acct-empty">No reviews yet — be the first to rate Glomi.</p>`;
 }
 
-document.getElementById('acct-name-input').addEventListener('input', (e) => {
-  const account = getAccount(); account.name = e.target.value; setAccount(account);
-  document.getElementById('acct-avatar').textContent = (e.target.value.trim().charAt(0) || 'G').toUpperCase();
-});
-document.getElementById('acct-email-input').addEventListener('input', (e) => {
-  const account = getAccount(); account.email = e.target.value; setAccount(account);
-});
-// ---------- Checkout (preview only -- see checkout-note in the markup: nothing typed here is stored or sent) ----------
+// ---------- Checkout (name/email are only collected here, on upgrade -- see checkout-note in the markup) ----------
 function openCheckout(){
   const account = getAccount();
   const isPro = account.plan === 'pro';
@@ -1887,11 +1676,12 @@ document.getElementById('cc-cvc').addEventListener('input', (e) => {
 document.getElementById('checkout-submit').addEventListener('click', () => {
   const errEl = document.getElementById('checkout-error');
   const name = document.getElementById('cc-name').value.trim();
+  const email = document.getElementById('cc-email').value.trim();
   const numberDigits = document.getElementById('cc-number').value.replace(/\D/g, '');
   const expiry = document.getElementById('cc-expiry').value.trim();
   const cvc = document.getElementById('cc-cvc').value.trim();
 
-  if (!name || numberDigits.length < 12 || !/^\d{2}\/\d{2}$/.test(expiry) || cvc.length < 3) {
+  if (!name || !/^\S+@\S+\.\S+$/.test(email) || numberDigits.length < 12 || !/^\d{2}\/\d{2}$/.test(expiry) || cvc.length < 3) {
     errEl.textContent = 'Check your details and try again.';
     return;
   }
@@ -1899,11 +1689,14 @@ document.getElementById('checkout-submit').addEventListener('click', () => {
   const last4 = numberDigits.slice(-4);
   const account = getAccount();
   account.plan = 'pro';
+  account.name = name;
+  account.email = email;
   account.cardLast4 = last4;
   setAccount(account);
 
   // Card number/CVC never get stored -- clear the fields immediately, keep only the last 4 digits for display.
   document.getElementById('cc-name').value = '';
+  document.getElementById('cc-email').value = '';
   document.getElementById('cc-number').value = '';
   document.getElementById('cc-expiry').value = '';
   document.getElementById('cc-cvc').value = '';
@@ -1967,7 +1760,7 @@ function setTabbarVisible(visible){
   document.getElementById('chat-fab-wrap').classList.toggle('hidden', !visible);
 }
 
-// ---------- Chip groups (occasion picker + skin quiz), each scoped to its own container ----------
+// ---------- Chip groups, each scoped to its own container ----------
 function setupChipGroup(containerId, onSelect){
   const container = document.getElementById(containerId);
   container.querySelectorAll('.chip').forEach(chip => {
@@ -1996,52 +1789,6 @@ document.querySelector('.chip[data-occasion="School"]').classList.add('active');
 document.getElementById('occasion-other-input').addEventListener('input', (e) => {
   if (document.querySelector('#occasion-chips .chip[data-occasion="Other"]').classList.contains('active')) {
     state.occasion = e.target.value.trim() || 'Other';
-  }
-});
-
-const quiz = { skinType:'', skinTone:'', concern:'', budget:'' };
-setupChipGroup('quiz-skin-type', v => { quiz.skinType = v; });
-setupChipGroup('quiz-skin-tone', v => { quiz.skinTone = v; });
-setupChipGroup('quiz-concern', v => { quiz.concern = v; });
-setupChipGroup('quiz-budget', v => { quiz.budget = v; });
-
-document.getElementById('quiz-btn').addEventListener('click', async () => {
-  const errEl = document.getElementById('quiz-error');
-  const resultEl = document.getElementById('quiz-result');
-  errEl.textContent = '';
-
-  if (!quiz.skinType || !quiz.skinTone || !quiz.concern || !quiz.budget) {
-    errEl.textContent = 'Pick one answer for each question first.';
-    return;
-  }
-
-  const btn = document.getElementById('quiz-btn');
-  btn.disabled = true;
-  btn.textContent = 'Thinking…';
-  resultEl.classList.remove('hidden');
-  resultEl.textContent = 'Putting together your recommendations…';
-
-  const prompt = `You are a knowledgeable, friendly makeup and skincare advisor for teenagers and beginners.
-Skin type: ${quiz.skinType}
-Skin tone: ${quiz.skinTone}
-Main concern: ${quiz.concern}
-Budget: ${quiz.budget}
-
-Give a short, encouraging recommendation covering, in this order:
-1. What kind of makeup look would suit them well right now (1-2 sentences)
-2. 3-4 product types they should prioritize owning, each with one real, widely available, budget-appropriate brand and product example (e.g. "Concealer - Maybelline Instant Age Rewind")
-3. One quick tip specific to their skin type
-
-Keep it warm and concise. Plain text only, no markdown, no asterisks, no headers — just clear sentences with a line break between each of the three parts.`;
-
-  try {
-    const text = await callClaude([{ type: "text", text: prompt }]);
-    resultEl.textContent = text.trim();
-  } catch (err) {
-    resultEl.textContent = "Couldn't get your recommendations — try again.";
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Get my recommendations';
   }
 });
 
@@ -2313,7 +2060,7 @@ const speakToggleBtn = document.getElementById('speak-toggle');
 speakToggleBtn.addEventListener('click', () => {
   readAloudOn = !readAloudOn;
   speakToggleBtn.classList.toggle('on', readAloudOn);
-  speakToggleBtn.textContent = readAloudOn ? '🔊 Read steps aloud' : '🔇 Steps muted';
+  speakToggleBtn.textContent = readAloudOn ? 'Read steps aloud' : 'Steps muted';
   if (!readAloudOn) window.speechSynthesis.cancel();
 });
 
@@ -2361,7 +2108,7 @@ document.getElementById('next-btn').addEventListener('click', () => {
     stopCamera();
     setTabbarVisible(true);
     const saveBtn = document.getElementById('save-look-btn');
-    saveBtn.textContent = '💾 Save this look';
+    saveBtn.textContent = 'Save this look';
     saveBtn.disabled = false;
     document.getElementById('save-limit-note').textContent = '';
   }
@@ -2425,7 +2172,7 @@ document.getElementById('substitute-btn').addEventListener('click', async () => 
     resultEl.textContent = "Couldn't find a swap — try again.";
   } finally {
     btn.disabled = false;
-    btn.textContent = "🔁 Don't have this? Get a swap";
+    btn.textContent = "Don't have this? Get a swap";
   }
 });
 
@@ -2458,7 +2205,7 @@ Look at the photo and give brief, warm, specific spoken feedback — max 2 short
     feedbackCard.classList.add('show');
   }finally{
     btn.disabled = false;
-    btn.textContent = '✨ Check my progress';
+    btn.textContent = 'Check my progress';
     mirrorWrap.classList.remove('processing');
   }
 }
