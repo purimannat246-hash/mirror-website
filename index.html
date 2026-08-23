@@ -647,24 +647,6 @@
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   }
 
-  .looks-featured-wrap{ margin-bottom:12px; }
-  .look-featured{
-    background:var(--surface); border:2px solid var(--line); border-radius:18px; overflow:hidden;
-    box-shadow:4px 4px 0 rgba(0,0,0,0.6); position:relative; min-height:160px; cursor:pointer;
-    display:flex; align-items:flex-end;
-  }
-  .look-featured::after{
-    content:''; position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,0.78), transparent 62%);
-  }
-  .look-featured-body{ position:relative; z-index:1; padding:18px; width:100%; }
-  .look-featured .look-tag{ background:var(--ink); }
-  .look-featured .look-name{ font-size:20px; color:#fff; margin-top:7px; }
-  .look-featured .look-desc{ color:rgba(255,255,255,0.78); font-size:12px; -webkit-line-clamp:2; max-width:34ch; }
-  .look-featured .look-save{ z-index:2; }
-  .look-featured.bold-glam{ background-image:linear-gradient(150deg, #FF17C4, #4A0033); }
-  .look-featured.clean-girl{ background-image:linear-gradient(150deg, #E9E4E7, #A99BA8); }
-  .look-featured.soft-romantic{ background-image:linear-gradient(150deg, #FFC2E0, #FF8AC2); }
-  .look-featured.golden-hour{ background-image:linear-gradient(150deg, #F2B84B, #4A2F0A); }
 
   .look-detail-overlay{
     position:fixed; inset:0; z-index:60;
@@ -1418,7 +1400,6 @@ const LOOKS = [
 function renderLooksGrid(){
   const grid = document.getElementById('looks-grid');
   const favorites = getFavorites();
-  const [featured, ...rest] = LOOKS;
 
   const cardHtml = (look) => `
     <div class="look-card" data-look-id="${look.id}">
@@ -1434,19 +1415,7 @@ function renderLooksGrid(){
     </div>
   `;
 
-  grid.innerHTML = `
-    <div class="looks-featured-wrap">
-      <div class="look-featured ${featured.art}" data-look-id="${featured.id}">
-        <button class="look-save${favorites.includes(featured.id) ? ' saved' : ''}" data-look-id="${featured.id}" aria-label="Save look"><svg viewBox="0 0 24 24"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7 17 3 13.4 3 9.4 3 6.6 5.2 4.5 7.9 4.5c1.5 0 3 .7 4 1.9a5.4 5.4 0 0 1 4-1.9c2.7 0 4.9 2.1 4.9 4.9 0 4-4 7.6-8.2 10.8-.2.2-.5.3-.8.3Z"/></svg></button>
-        <div class="look-featured-body">
-          <span class="look-tag">${featured.tag}</span>
-          <h3 class="look-name">${featured.name}</h3>
-          <p class="look-desc">${featured.desc}</p>
-        </div>
-      </div>
-    </div>
-    <div class="looks-grid">${rest.map(cardHtml).join('')}</div>
-  `;
+  grid.innerHTML = `<div class="looks-grid">${LOOKS.map(cardHtml).join('')}</div>`;
 
   grid.querySelectorAll('.look-save').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1454,7 +1423,7 @@ function renderLooksGrid(){
       toggleFavorite(btn.dataset.lookId);
     });
   });
-  grid.querySelectorAll('.look-card, .look-featured').forEach(card => {
+  grid.querySelectorAll('.look-card').forEach(card => {
     card.addEventListener('click', () => openLookDetail(card.dataset.lookId));
   });
 }
