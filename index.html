@@ -1666,27 +1666,52 @@ function hexToRgbaDarken(hex, factor, alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+// Straight lineTo() between sparse landmark points draws a visible polygon, not a curve --
+// probably the single biggest tell that a shape is canvas-drawn rather than photo-real. This
+// traces the same points as a smooth curve instead: quadraticCurveTo through each point toward
+// the midpoint of the next segment, a standard, cheap way to turn a sparse point loop into a
+// continuous curve without needing full spline math.
+function tracePath(ctx, pts, closed){
+  const n = pts.length;
+  if (n < 3) {
+    pts.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+    if (closed) ctx.closePath();
+    return;
+  }
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  if (closed) {
+    const first = mid(pts[n - 1], pts[0]);
+    ctx.moveTo(first.x, first.y);
+    for (let i = 0; i < n; i++) {
+      const next = mid(pts[i], pts[(i + 1) % n]);
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, next.x, next.y);
+    }
+    ctx.closePath();
+  } else {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 0; i < n - 1; i++) {
+      const next = mid(pts[i], pts[i + 1]);
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, next.x, next.y);
+    }
+    ctx.lineTo(pts[n - 1].x, pts[n - 1].y);
+  }
+}
+
 // All three use 'multiply' blend + a soft blur so the color tints the video's existing skin
 // texture/shading instead of sitting on top as a flat painted patch -- the single biggest lever
 // for realism available in 2D canvas without a trained blend model.
 function drawTryonLips(ctx, points, w, h, color, scale){
+  const outerPx = TRYON_LIPS_OUTER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
+  const innerPx = TRYON_LIPS_INNER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
   const blur = Math.max(1.5, scale * 0.045);
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
-  TRYON_LIPS_OUTER.forEach((idx, i) => {
-    const p = points[idx];
-    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
-  });
-  ctx.closePath();
+  tracePath(ctx, outerPx, true);
   // The inner mouth loop is added to the same path with an even-odd fill, which punches the
   // mouth opening back out -- otherwise an open mouth gets painted straight over the teeth.
-  TRYON_LIPS_INNER.forEach((idx, i) => {
-    const p = points[idx];
-    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
-  });
-  ctx.closePath();
+  tracePath(ctx, innerPx, true);
   ctx.fillStyle = hexToRgba(color, 0.75);
   ctx.fill('evenodd');
   ctx.restore();
@@ -1696,11 +1721,7 @@ function drawTryonLips(ctx, points, w, h, color, scale){
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
-  TRYON_LIPS_OUTER.forEach((idx, i) => {
-    const p = points[idx];
-    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
-  });
-  ctx.closePath();
+  tracePath(ctx, outerPx, true);
   ctx.lineWidth = Math.max(1, scale * 0.018);
   ctx.strokeStyle = hexToRgbaDarken(color, 0.55, 0.5);
   ctx.stroke();
@@ -1739,13 +1760,12 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
     const lift = scale * liftMult;
     const blur = Math.max(1.5, scale * blurMult);
     const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
+    const loop = bottom.concat(top.slice().reverse());
     ctx.save();
     ctx.filter = `blur(${blur}px)`;
     ctx.globalCompositeOperation = 'multiply';
     ctx.beginPath();
-    bottom.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-    for (let i = top.length - 1; i >= 0; i--) ctx.lineTo(top[i].x, top[i].y);
-    ctx.closePath();
+    tracePath(ctx, loop, true);
     const midBottom = bottom[Math.floor(bottom.length / 2)];
     const midTop = top[Math.floor(top.length / 2)];
     const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
@@ -1757,6 +1777,17 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   };
   drawBand(0.85, 0.28, 0.09); // wide soft wash
   drawBand(0.5, 0.65, 0.05);  // denser definition near the lash line
+
+  // A thin darker line right along the lash line for definition -- same idea as the lip liner,
+  // otherwise the shadow reads as a soft smear with no anchor edge.
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.beginPath();
+  tracePath(ctx, bottom, false);
+  ctx.lineWidth = Math.max(1, scale * 0.012);
+  ctx.strokeStyle = hexToRgbaDarken(color, 0.5, 0.45);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
