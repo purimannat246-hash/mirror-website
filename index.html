@@ -1439,11 +1439,19 @@ function deriveLookColors(){
 // then rendering every color at the same fixed opacity, so a soft Everyday pink and a rich Party
 // red looked equally strong on camera. This scales how strongly the filter applies, so Party
 // visibly reads as bolder on camera than Everyday, not just whatever shade the routine picked.
+// Party stays at 1.0 (the tuned baseline) rather than boosting past it -- the routine's own color
+// choice for Party is already the boldest/darkest of the three occasions, so multiplying its alpha
+// up too on top of that compounds two "make it bolder" signals at once. A real face's eye socket
+// carries genuine natural shadow, and 'color' blend (see drawTryonEyeshadow()) preserves whatever
+// lightness is already there -- so a dark Party eyeshadow color at a boosted alpha, over an
+// already-shadowed socket, read as solid near-black blocks on-device even though the blend mode
+// itself can't crush to true black. Base alphas were also pulled back for the same reason (see
+// drawTryonEyeshadow/Cheek) -- this stays the ceiling, not an additional multiplier past it.
 function getOccasionIntensity(occasion){
-  if (occasion === 'Everyday') return 0.68;
-  if (occasion === 'Date') return 0.88;
-  if (occasion === 'Party') return 1.15;
-  return 0.85; // custom "Other" occasions -- a reasonable middle ground
+  if (occasion === 'Everyday') return 0.55;
+  if (occasion === 'Date') return 0.78;
+  if (occasion === 'Party') return 1.0;
+  return 0.75; // custom "Other" occasions -- a reasonable middle ground
 }
 
 function hexToRgba(hex, alpha){
@@ -1603,11 +1611,16 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale, intensity, spa
   // the video pixel underneath already was, never darker, no matter the fill color or alpha. That's
   // the actual fix for the old "solid black blocks" bug: 'multiply' has no such guarantee (it
   // darkens toward the fill color regardless of alpha, which is exactly what crushed to black
-  // before), so the fix isn't just capping opacity -- it's using a blend mode that can't do that
-  // in the first place. `intensity` (see getOccasionIntensity()) scales the peak so Party reads
-  // visibly bolder than Everyday on camera, not just whatever hex the routine happened to pick.
-  const peakAlpha = Math.min(0.85, 0.62 * intensity);
-  const lift = scale * 0.62;
+  // before), so that fix isn't just capping opacity -- it's using a blend mode that can't do that
+  // in the first place. But 'color' blend still preserves whatever lightness is ALREADY on the
+  // canvas, and a real eye socket carries genuine natural shadow -- so a dark, well-saturated
+  // color at too high an alpha still read as a solid dark block on-device (confirmed from a real
+  // photo), even without ever technically going below the backdrop's own luminosity. Both the peak
+  // alpha and how far the band reaches toward the brow (`lift`) were pulled back for exactly that
+  // reason: less coverage of the naturally-darker socket/crease area, and a lower ceiling so a
+  // dark routine color plus Party's `intensity` can't compound into that again.
+  const peakAlpha = Math.min(0.55, 0.38 * intensity);
+  const lift = scale * 0.4;
   const blur = Math.max(1.5, scale * 0.07);
   const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
   const loop = bottom.concat(top.slice().reverse());
@@ -1628,7 +1641,7 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale, intensity, spa
 
   // A thin darker line right along the lash line for definition -- same idea as the lip liner,
   // also luminance-capped so it can't push a dark shade the rest of the way to solid black.
-  const linerAlpha = Math.min(0.4, (0.14 + hexLuminance(color) * 0.22) * intensity);
+  const linerAlpha = Math.min(0.3, (0.12 + hexLuminance(color) * 0.18) * intensity);
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
@@ -1647,7 +1660,11 @@ function drawTryonCheek(ctx, points, cheek, w, h, color, scale, intensity){
   const eyeP = points[cheek.eyeCorner], mouthP = points[cheek.mouthCorner];
   const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
   const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
-  const r = scale * 0.8;
+  // r = scale*0.8 (scale being the full eye-corner-to-eye-corner distance) made this radius wide
+  // enough that the left/right circles overlapped across the nose and chin on a real face -- a
+  // real photo showed pink covering nearly the whole lower face instead of two cheek patches.
+  // 0.4 keeps it to something that actually reads as "cheeks" rather than a face-wide wash.
+  const r = scale * 0.4;
   ctx.save();
   // No ctx.filter blur here -- the radial gradient below already fades to zero alpha on its own,
   // so a canvas blur() pass on top was pure redundant cost. Canvas blur() runs in software on a
@@ -1656,13 +1673,13 @@ function drawTryonCheek(ctx, points, cheek, w, h, color, scale, intensity){
   // helps frame rate on weaker phones, which is what jittery/laggy tracking actually comes from.
   // 'color' blend (see drawTryonEyeshadow() for the full reasoning) instead of 'multiply' -- keeps
   // the cheek's own lighting/shading showing through the tint instead of just darkening it, which
-  // reads as a real flush of color rather than a grey-ish shadow, and lets the peak alpha go up
-  // safely since this blend mode can't crush toward black regardless of alpha. `intensity` scales
-  // it further per occasion (see getOccasionIntensity()).
+  // reads as a real flush of color rather than a grey-ish shadow. `intensity` scales the peak
+  // alpha per occasion (see getOccasionIntensity()), capped well under full strength so it stays a
+  // flush of color rather than a solid painted circle.
   ctx.globalCompositeOperation = 'color';
   const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-  grad.addColorStop(0, hexToRgba(color, Math.min(0.85, 0.6 * intensity)));
-  grad.addColorStop(0.7, hexToRgba(color, Math.min(0.5, 0.32 * intensity)));
+  grad.addColorStop(0, hexToRgba(color, Math.min(0.5, 0.42 * intensity)));
+  grad.addColorStop(0.7, hexToRgba(color, Math.min(0.28, 0.2 * intensity)));
   grad.addColorStop(1, hexToRgba(color, 0));
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
