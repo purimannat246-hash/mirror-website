@@ -1658,6 +1658,15 @@ function hexToRgba(hex, alpha){
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
+// 'multiply' blend darkens toward the fill color regardless of alpha -- a near-black source at
+// moderate alpha can still crush the result close to solid black, so anything drawn with multiply
+// and a color that might come back very dark (like a smoky Party eyeshadow) needs its alpha capped
+// based on how dark the color actually is, not used at a flat value.
+function hexLuminance(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
 function hexToRgbaDarken(hex, factor, alpha){
   const n = parseInt(hex.slice(1), 16);
   const r = Math.round(((n >> 16) & 255) * factor);
@@ -1753,39 +1762,40 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   const up = eyeUpVector(points, eye.corner1, eye.corner2);
   const bottom = upperPts.map(p => ({ x: p.x * w, y: p.y * h }));
 
-  // One flat band always reads as a single stripe of color; real application (and good filters)
-  // blend a wide, soft "transition" wash high toward the brow, then a denser color close to the
-  // lash line on top of it -- draw the same shape twice at different reach/opacity/blur for that.
-  const drawBand = (liftMult, peakAlpha, blurMult) => {
-    const lift = scale * liftMult;
-    const blur = Math.max(1.5, scale * blurMult);
-    const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
-    const loop = bottom.concat(top.slice().reverse());
-    ctx.save();
-    ctx.filter = `blur(${blur}px)`;
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.beginPath();
-    tracePath(ctx, loop, true);
-    const midBottom = bottom[Math.floor(bottom.length / 2)];
-    const midTop = top[Math.floor(top.length / 2)];
-    const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
-    grad.addColorStop(0, hexToRgba(color, peakAlpha));
-    grad.addColorStop(1, hexToRgba(color, 0));
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.restore();
-  };
-  drawBand(0.85, 0.28, 0.09); // wide soft wash
-  drawBand(0.5, 0.65, 0.05);  // denser definition near the lash line
+  // A dark "Party" shade at even moderate alpha, drawn with 'multiply', can still crush toward
+  // solid black -- multiply always darkens toward the fill color regardless of alpha, so stacking
+  // passes (as an earlier version did) compounds that darkening pass over pass. Fixed here to a
+  // single non-stacked fill, with peak opacity capped by how dark the source color already is so a
+  // near-black shade never reads as an opaque block.
+  const peakAlpha = Math.min(0.4, 0.16 + hexLuminance(color) * 0.32);
+  const lift = scale * 0.62;
+  const blur = Math.max(1.5, scale * 0.07);
+  const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
+  const loop = bottom.concat(top.slice().reverse());
+  ctx.save();
+  ctx.filter = `blur(${blur}px)`;
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.beginPath();
+  tracePath(ctx, loop, true);
+  const midBottom = bottom[Math.floor(bottom.length / 2)];
+  const midTop = top[Math.floor(top.length / 2)];
+  const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
+  grad.addColorStop(0, hexToRgba(color, peakAlpha));
+  grad.addColorStop(0.55, hexToRgba(color, peakAlpha * 0.5));
+  grad.addColorStop(1, hexToRgba(color, 0));
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
 
   // A thin darker line right along the lash line for definition -- same idea as the lip liner,
-  // otherwise the shadow reads as a soft smear with no anchor edge.
+  // also luminance-capped so it can't push a dark shade the rest of the way to solid black.
+  const linerAlpha = Math.min(0.32, 0.14 + hexLuminance(color) * 0.22);
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
   tracePath(ctx, bottom, false);
-  ctx.lineWidth = Math.max(1, scale * 0.012);
-  ctx.strokeStyle = hexToRgbaDarken(color, 0.5, 0.45);
+  ctx.lineWidth = Math.max(1, scale * 0.01);
+  ctx.strokeStyle = hexToRgbaDarken(color, 0.5, linerAlpha);
   ctx.stroke();
   ctx.restore();
 }
