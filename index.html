@@ -26,7 +26,7 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
-  button, .chip, .tab-btn, .chat-fab{ touch-action:manipulation; }
+  button, .chip, .tab-btn, .contact-fab{ touch-action:manipulation; }
   h1,h2,h3, .display{
     font-family:'Unbounded', sans-serif;
     font-weight:700;
@@ -52,22 +52,6 @@
     border:1.5px solid var(--line);
     padding:6px 10px;
     border-radius:8px;
-  }
-  .price-banner{
-    display:flex;
-    justify-content:center;
-    margin-bottom:24px;
-  }
-  .price-pill-highlight{
-    font-family:'Unbounded', sans-serif;
-    font-size:12px;
-    font-weight:700;
-    color:#000;
-    background:var(--pink);
-    border:2px solid var(--line);
-    padding:9px 16px;
-    border-radius:10px;
-    box-shadow:3px 3px 0 rgba(0,0,0,0.6);
   }
   /* ---------- shared setup-style bits (reused by Looks/Advice/Account headers) ---------- */
   .eyebrow{
@@ -246,24 +230,6 @@
     cursor:pointer;
     margin-top:10px;
   }
-
-  /* ---------- community reviews (curated examples, setup screen) ---------- */
-  .community-grid{ display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
-  .community-card{
-    background:var(--surface); border:2px solid var(--line); border-radius:16px;
-    overflow:hidden; box-shadow:4px 4px 0 rgba(0,0,0,0.6);
-    display:flex;
-  }
-  .community-body{ padding:14px 16px; flex:1; min-width:0; }
-  .community-head{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
-  .community-avatar{
-    width:24px; height:24px; border-radius:50%; background:var(--pink); color:#000;
-    display:flex; align-items:center; justify-content:center; font-family:'Unbounded', sans-serif;
-    font-weight:800; font-size:11px; flex-shrink:0;
-  }
-  .community-name{ font-family:'Karla', sans-serif; font-weight:700; font-size:12px; }
-  .community-stars{ color:var(--pink); font-size:10.5px; margin-left:auto; letter-spacing:1px; }
-  .community-quote{ font-size:12px; color:var(--muted); font-weight:500; line-height:1.5; margin:0; }
 
   /* ---------- live screen ---------- */
   .live-header{
@@ -642,70 +608,44 @@
   /* ---------- finish & review ---------- */
   .review-photo{ width:100%; border-radius:14px; border:2px solid var(--line); display:block; margin-bottom:10px; }
 
-  /* ---------- chat widget ---------- */
-  .chat-fab-wrap{ position:fixed; inset:0; max-width:480px; margin:0 auto; pointer-events:none; z-index:45; }
-  .chat-fab{
+  /* ---------- contact widget ---------- */
+  .contact-fab-wrap{ position:fixed; inset:0; max-width:480px; margin:0 auto; pointer-events:none; z-index:45; }
+  .contact-fab{
     position:absolute; right:16px; bottom:96px; pointer-events:auto;
     width:52px; height:52px; border-radius:50%;
     background:var(--pink); color:#000; border:2px solid var(--line);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; box-shadow:3px 3px 0 rgba(0,0,0,0.6);
   }
-  .chat-fab svg{ width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-  .chat-send svg{ width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  .chat-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; transform:translateZ(0); }
-  .chat-overlay.hidden{ display:none; }
-  .chat-card{
+  .contact-fab svg{ width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .contact-overlay{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,0.86); display:flex; align-items:flex-end; transform:translateZ(0); }
+  .contact-overlay.hidden{ display:none; }
+  .contact-card{
     width:100%; max-width:480px; margin:0 auto;
     background:var(--surface); border-top:2px solid var(--line);
     border-radius:24px 24px 0 0;
-    max-height:min(640px, 85%);
-    min-height:0;
     display:flex; flex-direction:column;
     overflow:hidden;
   }
-  .chat-header{
+  .contact-header{
     display:flex; align-items:center; justify-content:space-between;
     padding:16px 18px; border-bottom:2px solid var(--line); flex-shrink:0;
   }
-  .chat-header-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; }
-  .chat-usage-note{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--muted); margin:4px 0 0; }
-  .chat-close{
+  .contact-header-title{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:15px; }
+  .contact-close{
     width:28px; height:28px; border-radius:50%;
     background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
     font-size:12px; cursor:pointer; flex-shrink:0;
   }
-  .chat-messages{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:10px; }
-  .chat-empty{ font-size:12.5px; color:var(--muted); font-weight:500; text-align:center; margin-top:12px; line-height:1.6; }
-  .chat-suggestions{ display:flex; flex-direction:column; gap:8px; margin-top:18px; }
-  .chat-suggestion{
-    background:var(--surface-2); border:2px solid var(--line); border-radius:12px;
-    color:var(--ink); font-family:'Karla', sans-serif; font-weight:600; font-size:12.5px;
-    padding:10px 12px; text-align:left; cursor:pointer;
+  .contact-list{ padding:18px; display:flex; flex-direction:column; gap:12px; padding-bottom:calc(18px + env(safe-area-inset-bottom)); }
+  .contact-link{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface-2); border:2px solid var(--line); border-radius:14px;
+    padding:14px 16px; color:var(--ink); text-decoration:none;
   }
-  .chat-suggestion:hover{ border-color:var(--pink); }
-  .chat-bubble{
-    max-width:82%; padding:10px 13px; border-radius:14px; font-size:13px; font-weight:500; line-height:1.5;
-    border:1.5px solid var(--line); white-space:pre-line;
-  }
-  .chat-bubble.user{ align-self:flex-end; background:var(--pink); color:#000; border-bottom-right-radius:4px; }
-  .chat-bubble.assistant{ align-self:flex-start; background:var(--surface-2); color:var(--ink); border-bottom-left-radius:4px; }
-  .chat-bubble.pending{ color:var(--muted); font-style:italic; }
-  .chat-input-row{
-    display:flex; gap:8px; padding:12px 14px calc(12px + env(safe-area-inset-bottom));
-    border-top:2px solid var(--line); background:var(--surface); flex-shrink:0;
-  }
-  .chat-input{
-    flex:1; background:var(--surface-2); border:2px solid var(--line); border-radius:12px;
-    color:var(--ink); font-family:'Karla', sans-serif; font-size:13px; padding:10px 12px; outline:none;
-  }
-  .chat-input::placeholder{ color:var(--muted); }
-  .chat-send{
-    width:44px; border-radius:12px; border:2px solid var(--line);
-    background:var(--pink); color:#000; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .chat-send:disabled{ opacity:0.5; }
+  .contact-link svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+  .contact-link-label{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); display:block; margin-bottom:2px; }
+  .contact-link-value{ font-family:'Karla', sans-serif; font-weight:700; font-size:14px; }
 
   /* ---------- advice tab ---------- */
   .advice-disclaimer{
@@ -780,10 +720,6 @@
 
 <div class="app">
 
-  <div class="price-banner">
-    <span class="price-pill price-pill-highlight">From €5/mo · pay per look</span>
-  </div>
-
   <!-- ================= HOME TAB ================= -->
   <div id="home-view">
 
@@ -805,54 +741,6 @@
       <button class="primary-btn hidden" id="other-start-btn">Start my live guide</button>
 
       <p class="error-line" id="setup-error"></p>
-
-
-      <div id="community-reviews" style="margin-top:8px;">
-        <span class="field-label">Loved by people trying Glomi</span>
-        <div class="community-grid">
-          <div class="community-card">
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">C</span>
-                <span class="community-name">Chloe, 16</span>
-                <span class="community-stars">★★★★★</span>
-              </div>
-              <p class="community-quote">The face diagram showing exactly where to put blush was such a game changer — I always struggled with that.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">S</span>
-                <span class="community-name">Sofia, 18</span>
-                <span class="community-stars">★★★★★</span>
-              </div>
-              <p class="community-quote">Did the smoky eye for prom with the step-by-step diagram and it turned out way better than I expected.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">E</span>
-                <span class="community-name">Ella, 15</span>
-                <span class="community-stars">★★★☆☆</span>
-              </div>
-              <p class="community-quote">Wish there were a few more occasion options built in, but the steps themselves are easy to follow and the voice guide is a nice touch.</p>
-            </div>
-          </div>
-          <div class="community-card">
-            <div class="community-body">
-              <div class="community-head">
-                <span class="community-avatar">M</span>
-                <span class="community-name">Maya, 17</span>
-                <span class="community-stars">★★☆☆☆</span>
-              </div>
-              <p class="community-quote">The live camera feedback felt pretty generic for me half the time, and it lagged a bit on my older phone. The diagrams are nice though.</p>
-            </div>
-          </div>
-        </div>
-        <p class="advice-disclaimer">Example reviews from early testers of this prototype.</p>
-      </div>
     </div>
 
     <!-- LIVE SCREEN -->
@@ -1071,23 +959,25 @@
   </div>
 </div>
 
-<div class="chat-fab-wrap" id="chat-fab-wrap">
-  <button class="chat-fab" id="chat-fab" aria-label="Chat with Glomi"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4v-4H4Z"/></svg></button>
+<div class="contact-fab-wrap" id="contact-fab-wrap">
+  <button class="contact-fab" id="contact-fab" aria-label="Contact Glomi"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="m4 6 8 7 8-7"/></svg></button>
 </div>
 
-<div class="chat-overlay hidden" id="chat-overlay">
-  <div class="chat-card">
-    <div class="chat-header">
-      <div>
-        <div class="chat-header-title"><span class="brand-dot"></span>Ask Glomi</div>
-        <p class="chat-usage-note" id="chat-usage-note"></p>
-      </div>
-      <button class="chat-close" id="chat-close" aria-label="Close">✕</button>
+<div class="contact-overlay hidden" id="contact-overlay">
+  <div class="contact-card">
+    <div class="contact-header">
+      <div class="contact-header-title"><span class="brand-dot"></span>Contact Glomi</div>
+      <button class="contact-close" id="contact-close" aria-label="Close">✕</button>
     </div>
-    <div class="chat-messages" id="chat-messages"></div>
-    <div class="chat-input-row">
-      <input class="chat-input" id="chat-input" type="text" maxlength="300" placeholder="Ask about a product, a look, your skin…">
-      <button class="chat-send" id="chat-send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <div class="contact-list">
+      <a class="contact-link" href="mailto:purimannat246@gmail.com">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="m4 6 8 7 8-7"/></svg>
+        <span><span class="contact-link-label">Email</span><span class="contact-link-value">purimannat246@gmail.com</span></span>
+      </a>
+      <a class="contact-link" href="tel:0899627673">
+        <svg viewBox="0 0 24 24"><path d="M6 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v3a2 2 0 0 1-2 2C10.5 20 4 13.5 4 6a2 2 0 0 1 2-2Z"/></svg>
+        <span><span class="contact-link-label">Phone</span><span class="contact-link-value">0899627673</span></span>
+      </a>
     </div>
   </div>
 </div>
@@ -1125,19 +1015,6 @@ function stripFences(s){
   return s.replace(/```json/g, "").replace(/```/g, "").trim();
 }
 
-async function callClaudeMessages(messages, system) {
-  const response = await fetch("/api/claude", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, system })
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Request failed");
-  }
-  return (data.content || []).map(b => b.text || "").join("\n");
-}
-
 function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str;
@@ -1159,7 +1036,6 @@ function isProAccount(){ return getAccount().plan === 'pro'; }
 
 // ---------- Free-plan limits (soft, on-device only -- see CLAUDE.md) ----------
 const FREE_GUIDE_LIMIT = 3;
-const FREE_CHAT_LIMIT = 5;
 
 function canSaveMoreGuides(){
   return isProAccount() || getRoutines().length < FREE_GUIDE_LIMIT;
@@ -1178,150 +1054,16 @@ function getRoutines(){ return loadJSON('glomi_routines', []); }
 function setRoutines(r){ saveJSON('glomi_routines', r); }
 function getReviews(){ return loadJSON('glomi_reviews', []); }
 function setReviews(r){ saveJSON('glomi_reviews', r); }
-// Keeping only the most recent messages stops the chat from getting slower
-// (bigger DOM render, bigger API payload, bigger localStorage write) the
-// longer someone's conversation history gets.
-const CHAT_HISTORY_LIMIT = 60;
-const CHAT_API_WINDOW = 20;
-function getChatHistory(){ return loadJSON('glomi_chat', []); }
-function setChatHistory(h){ saveJSON('glomi_chat', h.slice(-CHAT_HISTORY_LIMIT)); }
 
-function getChatUsageToday(){
-  const today = new Date().toISOString().slice(0, 10);
-  const usage = loadJSON('glomi_chat_usage', { date: today, count: 0 });
-  return usage.date === today ? usage : { date: today, count: 0 };
-}
-function incrementChatUsageToday(){
-  const usage = getChatUsageToday();
-  usage.count += 1;
-  saveJSON('glomi_chat_usage', usage);
-}
-function renderChatUsageNote(){
-  const note = document.getElementById('chat-usage-note');
-  if (isProAccount()) { note.textContent = ''; return; }
-  const remaining = Math.max(0, FREE_CHAT_LIMIT - getChatUsageToday().count);
-  note.textContent = `${remaining} of ${FREE_CHAT_LIMIT} free messages left today`;
-}
-
-// ---------- Chat widget ("Ask Glomi") ----------
-const CHAT_SYSTEM_PROMPT = "You are Glomi, a warm, knowledgeable makeup and skincare assistant for teenagers and beginners. Answer naturally and conversationally, keep replies fairly short (2-4 sentences unless asked for more detail), plain text only, no markdown or asterisks.";
-
-const CHAT_SUGGESTIONS = [
-  "What's a good skincare routine for oily skin?",
-  "Best drugstore concealer for beginners?",
-  "How do I do a simple smoky eye?",
-  "What's the right order to apply makeup?",
-  "How do I pick a foundation shade that matches?",
-];
-
-function renderChatMessages(){
-  const wrap = document.getElementById('chat-messages');
-  const history = getChatHistory();
-  if (!history.length){
-    wrap.innerHTML = `
-      <p class="chat-empty">Ask me anything — product picks, a technique, what might work for your skin. I'm not just for live guides.</p>
-      <div class="chat-suggestions" id="chat-suggestions">
-        ${CHAT_SUGGESTIONS.map((q, i) => `<button class="chat-suggestion" data-idx="${i}">${escapeHtml(q)}</button>`).join('')}
-      </div>
-    `;
-    wrap.querySelectorAll('.chat-suggestion').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.getElementById('chat-input').value = CHAT_SUGGESTIONS[parseInt(btn.dataset.idx)];
-        sendChatMessage();
-      });
-    });
-    return;
-  }
-  wrap.innerHTML = history.map(m => `<div class="chat-bubble ${m.role === 'user' ? 'user' : 'assistant'}">${escapeHtml(m.content)}</div>`).join('');
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-// iOS Safari doesn't resize `position:fixed` elements when the keyboard opens --
-// it shrinks the *visual* viewport and scrolls it relative to the *layout*
-// viewport (which fixed elements are anchored to) -- so both the height AND
-// that scroll offset have to be tracked, or the overlay drifts and leaves a
-// gap where the page underneath shows through.
-function syncChatOverlayHeight(){
-  const overlay = document.getElementById('chat-overlay');
-  if (overlay.classList.contains('hidden')) return;
-  const vv = window.visualViewport;
-  if (!vv) return;
-  overlay.style.height = vv.height + 'px';
-  overlay.style.transform = `translate3d(${vv.offsetLeft}px, ${vv.offsetTop}px, 0)`;
-}
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', syncChatOverlayHeight);
-  window.visualViewport.addEventListener('scroll', syncChatOverlayHeight);
-}
-
-function closeChatOverlay(){
-  const overlay = document.getElementById('chat-overlay');
-  overlay.classList.add('hidden');
-  overlay.style.height = '';
-  overlay.style.transform = '';
-}
-document.getElementById('chat-fab').addEventListener('click', () => {
-  document.getElementById('chat-overlay').classList.remove('hidden');
-  renderChatMessages();
-  renderChatUsageNote();
-  syncChatOverlayHeight();
+// ---------- Contact widget ----------
+document.getElementById('contact-fab').addEventListener('click', () => {
+  document.getElementById('contact-overlay').classList.remove('hidden');
 });
-document.getElementById('chat-close').addEventListener('click', closeChatOverlay);
-document.getElementById('chat-overlay').addEventListener('click', (e) => {
-  if (e.target.id === 'chat-overlay') closeChatOverlay();
+document.getElementById('contact-close').addEventListener('click', () => {
+  document.getElementById('contact-overlay').classList.add('hidden');
 });
-
-async function sendChatMessage(){
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  const sendBtn = document.getElementById('chat-send');
-
-  if (!isProAccount() && getChatUsageToday().count >= FREE_CHAT_LIMIT) {
-    const wrap = document.getElementById('chat-messages');
-    wrap.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant">You've hit today's free chat limit (${FREE_CHAT_LIMIT} messages). <a href="#" id="chat-limit-upgrade" style="color:var(--pink);font-weight:700;">Upgrade to Glomi Pro</a> for unlimited chat, or come back tomorrow.</div>`);
-    wrap.scrollTop = wrap.scrollHeight;
-    document.getElementById('chat-limit-upgrade').addEventListener('click', (e) => {
-      e.preventDefault();
-      closeChatOverlay();
-      switchTab('account');
-      openCheckout();
-    });
-    return;
-  }
-  incrementChatUsageToday();
-  renderChatUsageNote();
-
-  const history = getChatHistory();
-  history.push({ role: 'user', content: text });
-  setChatHistory(history);
-  input.value = '';
-  renderChatMessages();
-
-  sendBtn.disabled = true;
-  const wrap = document.getElementById('chat-messages');
-  wrap.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant pending" id="chat-pending">…</div>`);
-  wrap.scrollTop = wrap.scrollHeight;
-
-  try {
-    const apiMessages = getChatHistory().slice(-CHAT_API_WINDOW).map(m => ({ role: m.role, content: m.content }));
-    const reply = await callClaudeMessages(apiMessages, CHAT_SYSTEM_PROMPT);
-    const updated = getChatHistory();
-    updated.push({ role: 'assistant', content: reply.trim() });
-    setChatHistory(updated);
-  } catch (err) {
-    const updated = getChatHistory();
-    updated.push({ role: 'assistant', content: "Sorry, I couldn't get that — try again in a moment." });
-    setChatHistory(updated);
-  } finally {
-    document.getElementById('chat-pending')?.remove();
-    sendBtn.disabled = false;
-    renderChatMessages();
-  }
-}
-document.getElementById('chat-send').addEventListener('click', sendChatMessage);
-document.getElementById('chat-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+document.getElementById('contact-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'contact-overlay') document.getElementById('contact-overlay').classList.add('hidden');
 });
 
 // ---------- Account view ----------
@@ -1489,7 +1231,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 function setTabbarVisible(visible){
   document.getElementById('tabbar').classList.toggle('hidden', !visible);
-  document.getElementById('chat-fab-wrap').classList.toggle('hidden', !visible);
+  document.getElementById('contact-fab-wrap').classList.toggle('hidden', !visible);
 }
 
 // ---------- Chip groups, each scoped to its own container ----------
