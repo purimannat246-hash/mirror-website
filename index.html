@@ -26,7 +26,7 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
-  button, .chip, .tab-btn, .look-card, .look-save, .chat-fab{ touch-action:manipulation; }
+  button, .chip, .tab-btn, .chat-fab{ touch-action:manipulation; }
   h1,h2,h3, .display{
     font-family:'Unbounded', sans-serif;
     font-weight:700;
@@ -131,6 +131,11 @@
   }
   .chip .chip-icon{ font-size:17px; }
   .chip-icon svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .chip-photo{
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    background-size:cover; background-position:center;
+    border:2px solid var(--line);
+  }
   .chip:hover{ transform:translateY(-1px); }
   .chip.active{
     background:var(--pink);
@@ -155,33 +160,6 @@
   }
   .occasion-other::placeholder{ color:var(--muted); font-weight:500; }
   .occasion-other:focus{ border-color:var(--pink); }
-  .active-look-badge{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background:var(--surface);
-    border:2px solid var(--pink);
-    border-radius:12px;
-    padding:10px 12px;
-    margin-bottom:14px;
-    font-family:'Karla', sans-serif;
-    font-size:12px;
-    font-weight:600;
-    color:var(--ink);
-  }
-  .active-look-badge b{ color:var(--pink); font-family:'Unbounded', sans-serif; font-weight:700; }
-  .active-look-badge button{
-    margin-left:auto;
-    background:none;
-    border:none;
-    color:var(--muted);
-    font-family:'Karla', sans-serif;
-    font-weight:700;
-    font-size:11px;
-    cursor:pointer;
-    text-decoration:underline;
-  }
-
   .occasion-more{
     display:block;
     width:100%;
@@ -609,54 +587,6 @@
   .tab-btn.active{ color:var(--pink); }
 
   /* ---------- looks gallery ---------- */
-  .looks-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-  .look-card{
-    background:var(--surface);
-    border:2px solid var(--line);
-    border-radius:16px;
-    overflow:hidden;
-    cursor:pointer;
-    box-shadow:4px 4px 0 rgba(0,0,0,0.6);
-  }
-  .look-art{
-    position:relative;
-    height:96px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background-size:cover;
-    background-position:center;
-    border-bottom:2px solid var(--line);
-  }
-  .look-art.detail{ height:170px; border-radius:14px; border:2px solid var(--line); margin-bottom:14px; }
-  .look-art.mini{ height:auto; width:52px; aspect-ratio:1/1; border-radius:10px; border:2px solid var(--line); flex-shrink:0; }
-  .look-art.bold-glam{ background-image:url('images/looks/bold-glam.jpg'); }
-  .look-art.clean-girl{ background-image:url('images/looks/clean-girl.jpg'); background-position:center 30%; }
-  .look-art.golden-hour{ background-image:url('images/looks/golden-hour.jpg'); }
-  .look-pro-badge{
-    position:absolute; top:8px; left:8px; z-index:2;
-    font-family:'IBM Plex Mono', monospace; font-size:9px; font-weight:700; letter-spacing:0.05em;
-    background:#000; color:#fff; padding:3px 7px; border-radius:5px;
-  }
-
-  .look-save{
-    position:absolute; top:8px; right:8px;
-    width:28px; height:28px; border-radius:50%;
-    background:rgba(0,0,0,0.5); border:1.5px solid var(--line);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-  }
-  .look-save svg{ width:15px; height:15px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  .look-save.saved svg{ fill:var(--pink); stroke:var(--pink); }
-  .look-body{ padding:12px; }
-  .look-tag{
-    font-family:'IBM Plex Mono', monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
-    color:#000; background:var(--pink); display:inline-block; padding:3px 7px; border-radius:5px; margin-bottom:7px;
-  }
   .look-name{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:14px; margin:0 0 5px; }
   .look-desc{
     font-size:11px; color:var(--muted); font-weight:500; line-height:1.4; margin:0;
@@ -686,8 +616,6 @@
     background:var(--surface-2); border:2px solid var(--line); color:var(--ink);
     font-size:13px; cursor:pointer;
   }
-  .look-products{ font-size:13px; color:var(--muted); font-weight:500; line-height:1.5; margin:0 0 20px; }
-
   /* ---------- checkout (preview, no real charge) ---------- */
   .checkout-field{ margin-bottom:14px; }
   .checkout-row{ display:flex; gap:10px; }
@@ -867,16 +795,15 @@
 
       <span class="field-label">Occasion</span>
       <div class="chips" id="occasion-chips">
-        <div class="chip active" data-occasion="Everyday"><span class="chip-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>Everyday</div>
-        <div class="chip" data-occasion="Date"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M15 4a8 8 0 1 0 0 16 9 9 0 0 1 0-16Z"/></svg></span>Going out/Date</div>
-        <div class="chip" data-occasion="Party"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M12 2 14 10 22 12 14 14 12 22 10 14 2 12 10 10 Z"/></svg></span>Party</div>
+        <div class="chip active" data-occasion="Everyday"><span class="chip-photo" style="background-image:url('images/looks/clean-girl.jpg')"></span>Everyday</div>
+        <div class="chip" data-occasion="Date"><span class="chip-photo" style="background-image:url('images/looks/golden-hour.jpg')"></span>Going out/Date</div>
+        <div class="chip" data-occasion="Party"><span class="chip-photo" style="background-image:url('images/looks/bold-glam.jpg')"></span>Party</div>
         <div class="chip hidden" data-occasion="Other"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 7l12 10M18 7 6 17"/></svg></span>Other</div>
       </div>
       <button class="occasion-more" id="occasion-more-btn">▾ More options</button>
       <input class="occasion-other hidden" id="occasion-other-input" type="text" maxlength="60" placeholder="Tell me the occasion — e.g. prom, photoshoot, wedding guest">
       <button class="primary-btn hidden" id="other-start-btn">Start my live guide</button>
 
-      <div class="active-look-badge hidden" id="active-look-badge"></div>
       <p class="error-line" id="setup-error"></p>
 
 
@@ -1036,14 +963,6 @@
 
   </div>
 
-  <!-- ================= LOOKS TAB ================= -->
-  <div id="looks-view" class="hidden">
-    <span class="eyebrow">Get inspired</span>
-    <h1 class="headline">Browse looks.</h1>
-    <p class="sub">Try something new — every look is an easy, step-by-step guide.</p>
-    <div id="looks-grid"></div>
-  </div>
-
   <!-- ================= ACCOUNT TAB ================= -->
   <div id="account-view" class="hidden">
     <span class="eyebrow">Your account</span>
@@ -1055,11 +974,6 @@
         <span class="price-pill" id="sub-plan-pill">Free plan</span>
         <button class="acct-manage-btn" id="manage-sub-btn">Upgrade</button>
       </div>
-    </div>
-
-    <div class="acct-card">
-      <p class="acct-title">Favourite looks</p>
-      <div id="acct-favorites" style="margin-top:8px;"></div>
     </div>
 
     <div class="acct-card">
@@ -1086,8 +1000,6 @@
 </div>
 
 <canvas id="canvas" style="display:none;"></canvas>
-
-<div class="look-detail-overlay hidden" id="look-detail-overlay"></div>
 
 <div class="look-detail-overlay hidden" id="checkout-overlay">
   <div class="look-detail-card">
@@ -1182,14 +1094,12 @@
 
 <nav class="tabbar" id="tabbar">
   <button class="tab-btn active" data-tab="home"><span class="tab-icon"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V19a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1V9.5"/></svg></span><span class="tab-label">Home</span></button>
-  <button class="tab-btn" data-tab="looks"><span class="tab-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="13" height="13" rx="2.5"/><path d="M8 21h10a2 2 0 0 0 2-2V8"/></svg></span><span class="tab-label">Looks</span></button>
   <button class="tab-btn" data-tab="account"><span class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.6 7.5-6.6s7.5 2.5 7.5 6.6"/></svg></span><span class="tab-label">Account</span></button>
 </nav>
 
 <script>
 const state = {
   occasion: 'Everyday',
-  lookStyle: null,
   neededProducts: [],
   steps: [],
   currentStep: 0,
@@ -1264,8 +1174,6 @@ function showSaveLimitMessage(noteId){
   });
 }
 function setAccount(a){ saveJSON('glomi_account', a); }
-function getFavorites(){ return loadJSON('glomi_favorites', []); }
-function setFavorites(f){ saveJSON('glomi_favorites', f); }
 function getRoutines(){ return loadJSON('glomi_routines', []); }
 function setRoutines(r){ saveJSON('glomi_routines', r); }
 function getReviews(){ return loadJSON('glomi_reviews', []); }
@@ -1416,136 +1324,6 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
 });
 
-// ---------- Curated look gallery ----------
-const LOOKS = [
-  { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam',
-    desc:'Winged liner, a bold lip, and glow that reads from across the room.',
-    products:'liquid eyeliner, bold red lipstick, highlighter, mascara' },
-  { id:'clean-girl', name:'Clean Girl', tag:'Everyday', art:'clean-girl',
-    desc:'Minimal, skin-first, glossy — five minutes and out the door.',
-    products:'concealer, brow gel, lip oil, mascara' },
-  { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour',
-    desc:'Warm bronze eyes, a glowing highlight, and a golden-toned lip — like you caught the last bit of sunset.',
-    products:'bronzer, gold eyeshadow, cream highlighter, warm-toned lipstick' },
-];
-
-function renderLooksGrid(){
-  const grid = document.getElementById('looks-grid');
-  const favorites = getFavorites();
-
-  const cardHtml = (look) => `
-    <div class="look-card" data-look-id="${look.id}">
-      <div class="look-art ${look.art}">
-        ${look.pro ? '<span class="look-pro-badge">PRO</span>' : ''}
-        <button class="look-save${favorites.includes(look.id) ? ' saved' : ''}" data-look-id="${look.id}" aria-label="Save look"><svg viewBox="0 0 24 24"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7 17 3 13.4 3 9.4 3 6.6 5.2 4.5 7.9 4.5c1.5 0 3 .7 4 1.9a5.4 5.4 0 0 1 4-1.9c2.7 0 4.9 2.1 4.9 4.9 0 4-4 7.6-8.2 10.8-.2.2-.5.3-.8.3Z"/></svg></button>
-      </div>
-      <div class="look-body">
-        <span class="look-tag">${look.tag}</span>
-        <h3 class="look-name">${look.name}</h3>
-        <p class="look-desc">${look.desc}</p>
-      </div>
-    </div>
-  `;
-
-  grid.innerHTML = `<div class="looks-grid">${LOOKS.map(cardHtml).join('')}</div>`;
-
-  grid.querySelectorAll('.look-save').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFavorite(btn.dataset.lookId);
-    });
-  });
-  grid.querySelectorAll('.look-card').forEach(card => {
-    card.addEventListener('click', () => openLookDetail(card.dataset.lookId));
-  });
-}
-
-function toggleFavorite(lookId){
-  let favorites = getFavorites();
-  favorites = favorites.includes(lookId) ? favorites.filter(id => id !== lookId) : [...favorites, lookId];
-  setFavorites(favorites);
-  renderLooksGrid();
-  if (!document.getElementById('account-view').classList.contains('hidden')) renderAccountView();
-}
-
-function openLookDetail(lookId){
-  const look = LOOKS.find(l => l.id === lookId);
-  if (!look) return;
-  const overlay = document.getElementById('look-detail-overlay');
-  const favorites = getFavorites();
-  const isSaved = favorites.includes(look.id);
-  const locked = look.pro && !isProAccount();
-
-  overlay.innerHTML = `
-    <div class="look-detail-card">
-      <button class="look-detail-close" id="look-detail-close" aria-label="Close">✕</button>
-      <div class="look-art ${look.art} detail"></div>
-      <span class="look-tag">${look.tag}</span>
-      ${look.pro ? '<span class="look-pro-badge" style="position:static;display:inline-block;margin-left:6px;">PRO</span>' : ''}
-      <h2 class="look-name" style="font-size:22px;">${look.name}</h2>
-      <p class="look-desc" style="-webkit-line-clamp:unset;font-size:13px;margin-bottom:16px;">${look.desc}</p>
-      ${locked ? `
-        <p class="sub" style="margin-bottom:0;">This look is part of Glomi Pro — unlock it along with unlimited saved guides and chat.</p>
-        <button class="primary-btn" id="use-look-btn">Upgrade to unlock</button>
-      ` : `
-        <span class="field-label">Suggested products</span>
-        <p class="look-products">${look.products}</p>
-        <button class="primary-btn" id="use-look-btn">Use this look → start guide</button>
-        <button class="ghost-btn" id="fav-look-btn">${isSaved ? 'Saved to favourites' : 'Save to favourites'}</button>
-      `}
-    </div>
-  `;
-  overlay.classList.remove('hidden');
-  document.getElementById('look-detail-close').addEventListener('click', () => overlay.classList.add('hidden'));
-  document.getElementById('use-look-btn').addEventListener('click', () => {
-    overlay.classList.add('hidden');
-    if (locked) {
-      switchTab('account');
-      openCheckout();
-    } else {
-      useLookAsGuide(look);
-    }
-  });
-  if (!locked) {
-    document.getElementById('fav-look-btn').addEventListener('click', () => {
-      toggleFavorite(look.id);
-      openLookDetail(look.id);
-    });
-  }
-}
-
-function useLookAsGuide(look){
-  switchTab('home');
-  document.querySelectorAll('#occasion-chips .chip').forEach(c => c.classList.remove('active'));
-  const matchingChip = document.querySelector(`#occasion-chips .chip[data-occasion="${look.tag}"]`);
-  if (matchingChip) {
-    if (matchingChip.dataset.occasion === 'Other') {
-      document.querySelector('#occasion-chips .chip[data-occasion="Other"]').classList.remove('hidden');
-      document.getElementById('occasion-more-btn').textContent = '▴ Fewer options';
-    }
-    matchingChip.classList.add('active');
-  }
-  state.occasion = look.tag;
-  state.lookStyle = { name: look.name, desc: look.desc, products: look.products };
-  showActiveLookBadge();
-  startGuide();
-}
-
-function showActiveLookBadge(){
-  const badge = document.getElementById('active-look-badge');
-  if (!state.lookStyle) { badge.classList.add('hidden'); return; }
-  badge.innerHTML = `<span>Building your <b>${escapeHtml(state.lookStyle.name)}</b> look</span><button id="clear-look-style-btn">clear</button>`;
-  badge.classList.remove('hidden');
-  document.getElementById('clear-look-style-btn').addEventListener('click', () => {
-    state.lookStyle = null;
-    showActiveLookBadge();
-  });
-}
-
-document.getElementById('look-detail-overlay').addEventListener('click', (e) => {
-  if (e.target.id === 'look-detail-overlay') e.target.classList.add('hidden');
-});
-
 // ---------- Account view ----------
 function renderAccountView(){
   const account = getAccount();
@@ -1554,31 +1332,6 @@ function renderAccountView(){
     ? `Glomi Pro · •••• ${account.cardLast4 || '····'}`
     : 'Free plan';
   document.getElementById('manage-sub-btn').textContent = isPro ? 'Manage' : 'Upgrade';
-
-  const favorites = getFavorites();
-  const favWrap = document.getElementById('acct-favorites');
-  if (!favorites.length){
-    favWrap.innerHTML = `<p class="acct-empty">Heart a look on the Looks tab to save it here.</p>`;
-  } else {
-    favWrap.innerHTML = favorites.map(id => {
-      const look = LOOKS.find(l => l.id === id);
-      if (!look) return '';
-      return `<div class="acct-fav-row" data-look-id="${look.id}">
-        <div class="look-art ${look.art} mini"></div>
-        <div class="acct-fav-info"><b>${look.name}</b><span>${look.tag}</span></div>
-        <button class="acct-remove" data-look-id="${look.id}" aria-label="Remove">✕</button>
-      </div>`;
-    }).join('');
-    favWrap.querySelectorAll('.acct-fav-row').forEach(row => {
-      row.addEventListener('click', (e) => {
-        if (e.target.classList.contains('acct-remove')) return;
-        openLookDetail(row.dataset.lookId);
-      });
-    });
-    favWrap.querySelectorAll('.acct-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.lookId); });
-    });
-  }
 
   const routines = getRoutines();
   const routinesWrap = document.getElementById('acct-routines');
@@ -1721,7 +1474,7 @@ document.getElementById('review-submit-btn').addEventListener('click', () => {
 });
 
 // ---------- Tab bar ----------
-const TAB_VIEWS = { home: 'home-view', looks: 'looks-view', account: 'account-view' };
+const TAB_VIEWS = { home: 'home-view', account: 'account-view' };
 function switchTab(tab){
   Object.entries(TAB_VIEWS).forEach(([key, id]) => {
     document.getElementById(id).classList.toggle('hidden', key !== tab);
@@ -1729,7 +1482,6 @@ function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  if (tab === 'looks') renderLooksGrid();
   if (tab === 'account') renderAccountView();
 }
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1755,8 +1507,6 @@ function setupChipGroup(containerId, onSelect){
 setupChipGroup('occasion-chips', (val) => {
   const otherInput = document.getElementById('occasion-other-input');
   const otherStartBtn = document.getElementById('other-start-btn');
-  state.lookStyle = null;
-  showActiveLookBadge();
   if (val === 'Other') {
     otherInput.classList.remove('hidden');
     otherInput.focus();
@@ -1808,15 +1558,11 @@ async function startGuide(){
   // failure here, startTryonPreview() surfaces it properly if the user actually opens the preview.
   prefetchTryonLandmarker().catch(() => {});
 
-  const styleContext = state.lookStyle
-    ? `\n\nThey specifically picked this look from the gallery: "${state.lookStyle.name}" — ${state.lookStyle.desc} Build the routine around that exact style (the same intensity, colors, and technique it describes) rather than a generic version of the occasion. Typical products for this look: ${state.lookStyle.products}.`
-    : '';
-
-  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.${styleContext}
+  const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.
 
 Match the intensity, finish, and product choices to what this occasion actually calls for — don't default to the same safe, natural routine regardless of occasion. As a guide: Everyday should stay light, quick, and low-maintenance. Going out or a date should have a soft, romantic glow. A Party or night out should be bold — glittery or shimmery eyeshadow, richer color, and long-wearing/waterproof formulas called out where they matter (long-wear foundation, waterproof mascara, a transfer-resistant lip) so it actually holds up under lights and dancing, not a toned-down version of the look. For any other occasion, infer the right vibe and intensity from what they described.
 
-Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion${state.lookStyle ? ' and the specific look described above' : ''}. There is no fixed step count; use as many steps as the look genuinely needs.
+Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. There is no fixed step count; use as many steps as the look genuinely needs.
 
 First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. For each step give:
 - "title": 3-5 words
@@ -1838,9 +1584,8 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
     document.getElementById('loading-screen').classList.add('hidden');
-    const displayName = state.lookStyle ? state.lookStyle.name : state.occasion;
-    document.getElementById('occasion-pill').textContent = displayName;
-    document.getElementById('tryon-occasion-pill').textContent = displayName;
+    document.getElementById('occasion-pill').textContent = state.occasion;
+    document.getElementById('tryon-occasion-pill').textContent = state.occasion;
     renderNeededProducts();
     tryonState.colors = deriveLookColors();
     document.getElementById('tryon-screen').classList.remove('hidden');
