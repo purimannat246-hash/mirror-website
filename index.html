@@ -1363,6 +1363,10 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     document.getElementById('tryon-occasion-pill').textContent = state.occasion;
     renderNeededProducts();
     tryonState.colors = deriveLookColors();
+    tryonState.intensity = getOccasionIntensity(state.occasion);
+    // Party routines are explicitly generated as "bold... glittery or shimmery" -- give Party an
+    // actual shimmer treatment in the filter to match, rather than just a stronger opacity.
+    tryonState.sparkle = state.occasion === 'Party';
     document.getElementById('tryon-screen').classList.remove('hidden');
   } catch (err) {
     clearInterval(loadingInterval);
@@ -1395,7 +1399,7 @@ document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 // photorealistic render, and the landmark regions below are the standard/documented MediaPipe
 // point groups -- they haven't been tuned against a real face, so placement may need small
 // adjustments once tested on-device.
-const tryonState = { stream: null, rafId: null, landmarker: null, landmarkerPromise: null, colors: {} };
+const tryonState = { stream: null, rafId: null, landmarker: null, landmarkerPromise: null, colors: {}, intensity: 0.85, sparkle: false };
 
 const TRYON_LIPS_OUTER = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
 const TRYON_LIPS_INNER = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
@@ -1428,6 +1432,18 @@ function deriveLookColors(){
     if (/^#[0-9a-fA-F]{6}$/.test(s.color || '')) byZone[s.zone] = s.color;
   });
   return { lips: byZone['lips'] || null, eyes: byZone['eyelids'] || null, cheeks: byZone['cheeks'] || null };
+}
+
+// The step-generation prompt already asks for different intensity per occasion (Everyday light,
+// Date soft, Party bold), but that only shows up in which hex color comes back -- the filter was
+// then rendering every color at the same fixed opacity, so a soft Everyday pink and a rich Party
+// red looked equally strong on camera. This scales how strongly the filter applies, so Party
+// visibly reads as bolder on camera than Everyday, not just whatever shade the routine picked.
+function getOccasionIntensity(occasion){
+  if (occasion === 'Everyday') return 0.68;
+  if (occasion === 'Date') return 0.88;
+  if (occasion === 'Party') return 1.15;
+  return 0.85; // custom "Other" occasions -- a reasonable middle ground
 }
 
 function hexToRgba(hex, alpha){
@@ -1488,7 +1504,7 @@ function tracePath(ctx, pts, closed){
 // flat painted patch -- the single biggest lever for realism available in 2D canvas without a
 // trained blend model. Liners stay on 'multiply' since they're meant to read as genuinely darker
 // pigment, not a hue shift.
-function drawTryonLips(ctx, points, w, h, color, scale){
+function drawTryonLips(ctx, points, w, h, color, scale, intensity){
   const outerPx = TRYON_LIPS_OUTER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
   const innerPx = TRYON_LIPS_INNER.map(idx => ({ x: points[idx].x * w, y: points[idx].y * h }));
   const blur = Math.max(1.5, scale * 0.045);
@@ -1507,7 +1523,7 @@ function drawTryonLips(ctx, points, w, h, color, scale){
   // The inner mouth loop is added to the same path with an even-odd fill, which punches the
   // mouth opening back out -- otherwise an open mouth gets painted straight over the teeth.
   tracePath(ctx, innerPx, true);
-  ctx.fillStyle = hexToRgba(color, 0.9);
+  ctx.fillStyle = hexToRgba(color, Math.min(1, 0.9 * intensity));
   ctx.fill('evenodd');
   ctx.restore();
 
@@ -1515,7 +1531,7 @@ function drawTryonLips(ctx, points, w, h, color, scale){
   // lipstick; real lip products (and lip filters) always carry a slightly deeper edge line. Stays
   // on 'multiply' (a liner should read as genuinely darker pigment, not just a hue shift), with a
   // luminance-based cap so a very dark lip color can't push the liner itself toward solid black.
-  const linerAlpha = Math.min(0.4, 0.16 + hexLuminance(color) * 0.28);
+  const linerAlpha = Math.min(0.5, (0.16 + hexLuminance(color) * 0.28) * intensity);
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
@@ -1544,7 +1560,34 @@ function drawTryonLips(ctx, points, w, h, color, scale){
   ctx.restore();
 }
 
-function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
+// A few twinkling highlight points across the eyeshadow band for Party looks, screen-blended so
+// they only ever brighten (never darken or desaturate the shadow underneath), pulsing on a sine
+// wave keyed off the real clock so it reads as sparkle rather than a static pattern painted on.
+function drawTryonSparkle(ctx, bottom, top, scale, now){
+  const positions = [0.12, 0.35, 0.58, 0.82];
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  positions.forEach((t, i) => {
+    const bi = Math.min(bottom.length - 1, Math.floor(t * (bottom.length - 1)));
+    const b = bottom[bi], tp = top[bi];
+    const along = 0.3 + (i % 2) * 0.35; // vary how far up toward the brow each sparkle sits
+    const x = b.x + (tp.x - b.x) * along;
+    const y = b.y + (tp.y - b.y) * along;
+    const twinkle = 0.5 + 0.5 * Math.sin(now / 420 + i * 1.7);
+    const r = scale * 0.035 * (0.7 + twinkle * 0.6);
+    const alpha = 0.15 + twinkle * 0.35;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale, intensity, sparkle, now){
   const upperPts = eye.upper.map(i => points[i]);
   // "Up toward the brow" is derived from this eye's own corners, not a fixed screen-space
   // direction -- so the band tracks correctly as the head tilts.
@@ -1561,8 +1604,9 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   // the actual fix for the old "solid black blocks" bug: 'multiply' has no such guarantee (it
   // darkens toward the fill color regardless of alpha, which is exactly what crushed to black
   // before), so the fix isn't just capping opacity -- it's using a blend mode that can't do that
-  // in the first place. The peak below can stay flat now instead of luminance-scaled.
-  const peakAlpha = 0.62;
+  // in the first place. `intensity` (see getOccasionIntensity()) scales the peak so Party reads
+  // visibly bolder than Everyday on camera, not just whatever hex the routine happened to pick.
+  const peakAlpha = Math.min(0.85, 0.62 * intensity);
   const lift = scale * 0.62;
   const blur = Math.max(1.5, scale * 0.07);
   const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
@@ -1584,7 +1628,7 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
 
   // A thin darker line right along the lash line for definition -- same idea as the lip liner,
   // also luminance-capped so it can't push a dark shade the rest of the way to solid black.
-  const linerAlpha = Math.min(0.32, 0.14 + hexLuminance(color) * 0.22);
+  const linerAlpha = Math.min(0.4, (0.14 + hexLuminance(color) * 0.22) * intensity);
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
@@ -1593,9 +1637,13 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   ctx.strokeStyle = hexToRgbaDarken(color, 0.5, linerAlpha);
   ctx.stroke();
   ctx.restore();
+
+  // Party routines are explicitly generated as "bold... glittery or shimmery" (see the step-gen
+  // prompt) -- give Party an actual shimmer treatment here to match, rather than just more opacity.
+  if (sparkle) drawTryonSparkle(ctx, bottom, top, scale, now);
 }
 
-function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
+function drawTryonCheek(ctx, points, cheek, w, h, color, scale, intensity){
   const eyeP = points[cheek.eyeCorner], mouthP = points[cheek.mouthCorner];
   const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
   const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
@@ -1609,11 +1657,12 @@ function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
   // 'color' blend (see drawTryonEyeshadow() for the full reasoning) instead of 'multiply' -- keeps
   // the cheek's own lighting/shading showing through the tint instead of just darkening it, which
   // reads as a real flush of color rather than a grey-ish shadow, and lets the peak alpha go up
-  // safely since this blend mode can't crush toward black regardless of alpha.
+  // safely since this blend mode can't crush toward black regardless of alpha. `intensity` scales
+  // it further per occasion (see getOccasionIntensity()).
   ctx.globalCompositeOperation = 'color';
   const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-  grad.addColorStop(0, hexToRgba(color, 0.6));
-  grad.addColorStop(0.7, hexToRgba(color, 0.32));
+  grad.addColorStop(0, hexToRgba(color, Math.min(0.85, 0.6 * intensity)));
+  grad.addColorStop(0.7, hexToRgba(color, Math.min(0.5, 0.32 * intensity)));
   grad.addColorStop(1, hexToRgba(color, 0));
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -1712,15 +1761,16 @@ function renderTryonFrame(){
     const face = smoothTryonLandmarks(rawFace, now / 1000);
     const scale = landmarkFaceScale(face, w, h);
     const colors = tryonState.colors;
+    const intensity = tryonState.intensity;
     if (colors.eyes) {
-      drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes, scale);
-      drawTryonEyeshadow(ctx, face, TRYON_EYE_RIGHT, w, h, colors.eyes, scale);
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes, scale, intensity, tryonState.sparkle, now);
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_RIGHT, w, h, colors.eyes, scale, intensity, tryonState.sparkle, now);
     }
     if (colors.cheeks) {
-      drawTryonCheek(ctx, face, TRYON_CHEEK_LEFT, w, h, colors.cheeks, scale);
-      drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks, scale);
+      drawTryonCheek(ctx, face, TRYON_CHEEK_LEFT, w, h, colors.cheeks, scale, intensity);
+      drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks, scale, intensity);
     }
-    if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips, scale);
+    if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips, scale, intensity);
   } else {
     tryonFilters = null;
   }
