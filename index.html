@@ -352,6 +352,21 @@
     object-fit:cover;
     transform:scaleX(-1);
   }
+  .mirror canvas{
+    position:absolute; inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+    pointer-events:none;
+  }
+  .tryon-status{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    font-weight:500;
+    margin:-14px 0 16px;
+  }
   .mirror-placeholder{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
@@ -980,6 +995,33 @@
     <!-- LOADING (step generation) -->
     <div id="loading-screen" class="hidden">
       <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
+    </div>
+
+    <!-- TRY-ON PREVIEW (live camera filter, before the guide starts) -->
+    <div id="tryon-screen" class="hidden">
+      <div class="live-header">
+        <button class="back-link" id="tryon-back">← start over</button>
+        <span class="price-pill" id="tryon-occasion-pill">Everyday</span>
+      </div>
+      <span class="eyebrow">Live preview</span>
+      <h1 class="headline">See it on you first.</h1>
+      <p class="sub">A rough live color preview of this look on your face — lighting and camera angle affect how accurate it looks.</p>
+
+      <div class="mirror-wrap" id="tryon-mirror-wrap">
+        <div class="mirror">
+          <video id="tryon-video" autoplay playsinline muted></video>
+          <canvas id="tryon-canvas"></canvas>
+          <div class="mirror-placeholder" id="tryon-mirror-placeholder">
+            <span>Turn your camera on for a live preview</span>
+            <button id="tryon-camera-btn">Enable camera</button>
+          </div>
+        </div>
+      </div>
+      <p class="tryon-status" id="tryon-status"></p>
+      <p class="error-line" id="tryon-error"></p>
+
+      <button class="primary-btn" id="tryon-continue-btn">Looks good — start the guide</button>
+      <button class="ghost-btn" id="tryon-skip-btn">Skip preview</button>
     </div>
 
     <!-- DONE SCREEN -->
@@ -1791,11 +1833,12 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
     document.getElementById('loading-screen').classList.add('hidden');
-    document.getElementById('occasion-pill').textContent = state.lookStyle ? state.lookStyle.name : state.occasion;
+    const displayName = state.lookStyle ? state.lookStyle.name : state.occasion;
+    document.getElementById('occasion-pill').textContent = displayName;
+    document.getElementById('tryon-occasion-pill').textContent = displayName;
     renderNeededProducts();
-    renderStepTrack();
-    renderStep();
-    document.getElementById('live-screen').classList.remove('hidden');
+    tryonState.colors = deriveLookColors();
+    document.getElementById('tryon-screen').classList.remove('hidden');
   } catch (err) {
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('setup-screen').classList.remove('hidden');
@@ -1807,7 +1850,9 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
 // ---------- Back / restart ----------
 function resetToSetup(){
   stopCamera();
+  stopTryonPreview();
   document.getElementById('live-screen').classList.add('hidden');
+  document.getElementById('tryon-screen').classList.add('hidden');
   document.getElementById('done-screen').classList.add('hidden');
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('feedback-card').classList.remove('show');
@@ -1815,6 +1860,203 @@ function resetToSetup(){
 }
 document.getElementById('back-btn').addEventListener('click', resetToSetup);
 document.getElementById('restart-btn').addEventListener('click', resetToSetup);
+
+// ---------- Try-on preview (live face-tracked color filter, before the guide starts) ----------
+// Uses MediaPipe's Face Landmarker (loaded on demand from a CDN, not bundled -- this is the
+// only external script/model this app pulls in) to track ~468 face points live from the camera
+// and paints translucent color overlays for lips/eyes/cheeks using the colors the generated
+// routine picked for those zones. This is a rough live approximation (flat tinted shapes), not a
+// photorealistic render, and the landmark regions below are the standard/documented MediaPipe
+// point groups -- they haven't been tuned against a real face, so placement may need small
+// adjustments once tested on-device.
+const tryonState = { stream: null, rafId: null, landmarker: null, colors: {} };
+
+const TRYON_LIPS = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+const TRYON_EYE_LEFT = { upper: [246,161,160,159,158,157,173] };
+const TRYON_EYE_RIGHT = { upper: [466,388,387,386,385,384,398] };
+const TRYON_CHEEK_LEFT = { eyeCorner: 33, mouthCorner: 61 };
+const TRYON_CHEEK_RIGHT = { eyeCorner: 263, mouthCorner: 291 };
+
+function deriveLookColors(){
+  const byZone = {};
+  state.steps.forEach(s => {
+    if (/^#[0-9a-fA-F]{6}$/.test(s.color || '')) byZone[s.zone] = s.color;
+  });
+  return { lips: byZone['lips'] || null, eyes: byZone['eyelids'] || null, cheeks: byZone['cheeks'] || null };
+}
+
+function hexToRgba(hex, alpha){
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function drawTryonLips(ctx, points, w, h, color){
+  ctx.beginPath();
+  TRYON_LIPS.forEach((idx, i) => {
+    const p = points[idx];
+    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
+  });
+  ctx.closePath();
+  ctx.fillStyle = hexToRgba(color, 0.55);
+  ctx.fill();
+}
+
+function drawTryonEyeshadow(ctx, points, eye, w, h, color){
+  const upperPts = eye.upper.map(i => points[i]);
+  const lift = 0.035;
+  ctx.beginPath();
+  upperPts.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
+  });
+  for (let i = upperPts.length - 1; i >= 0; i--) {
+    ctx.lineTo(upperPts[i].x * w, (upperPts[i].y - lift) * h);
+  }
+  ctx.closePath();
+  ctx.fillStyle = hexToRgba(color, 0.35);
+  ctx.fill();
+}
+
+function drawTryonCheek(ctx, points, cheek, w, h, color){
+  const eyeP = points[cheek.eyeCorner], mouthP = points[cheek.mouthCorner];
+  const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
+  const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
+  const r = w * 0.09;
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+  grad.addColorStop(0, hexToRgba(color, 0.4));
+  grad.addColorStop(1, hexToRgba(color, 0));
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+async function loadTryonLandmarker(){
+  if (tryonState.landmarker) return tryonState.landmarker;
+  const { FaceLandmarker, FilesetResolver } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+  const filesetResolver = await FilesetResolver.forVisionTasks(
+    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+  );
+  const modelAssetPath = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+  let landmarker;
+  try {
+    landmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: { modelAssetPath, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numFaces: 1
+    });
+  } catch (err) {
+    landmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: { modelAssetPath, delegate: 'CPU' },
+      runningMode: 'VIDEO',
+      numFaces: 1
+    });
+  }
+  tryonState.landmarker = landmarker;
+  return landmarker;
+}
+
+function renderTryonFrame(){
+  const video = document.getElementById('tryon-video');
+  const canvas = document.getElementById('tryon-canvas');
+  if (!tryonState.stream || !tryonState.landmarker) return;
+  if (video.readyState < 2) {
+    tryonState.rafId = requestAnimationFrame(renderTryonFrame);
+    return;
+  }
+  const w = video.videoWidth, h = video.videoHeight;
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  const result = tryonState.landmarker.detectForVideo(video, performance.now());
+  const face = result.faceLandmarks && result.faceLandmarks[0];
+  if (face) {
+    const colors = tryonState.colors;
+    if (colors.eyes) {
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes);
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_RIGHT, w, h, colors.eyes);
+    }
+    if (colors.cheeks) {
+      drawTryonCheek(ctx, face, TRYON_CHEEK_LEFT, w, h, colors.cheeks);
+      drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks);
+    }
+    if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips);
+  }
+  tryonState.rafId = requestAnimationFrame(renderTryonFrame);
+}
+
+async function startTryonPreview(){
+  const statusEl = document.getElementById('tryon-status');
+  const errEl = document.getElementById('tryon-error');
+  errEl.textContent = '';
+  try {
+    tryonState.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    const video = document.getElementById('tryon-video');
+    video.srcObject = tryonState.stream;
+    document.getElementById('tryon-mirror-placeholder').classList.add('hidden');
+    if (video.readyState < 2) {
+      await new Promise(resolve => { video.onloadedmetadata = resolve; });
+    }
+  } catch (err) {
+    document.getElementById('tryon-mirror-placeholder').querySelector('span').textContent =
+      "Camera access was blocked — allow it in your browser settings for a live preview.";
+    return;
+  }
+
+  statusEl.textContent = 'Loading face tracking…';
+  try {
+    await loadTryonLandmarker();
+    statusEl.textContent = '';
+    renderTryonFrame();
+  } catch (err) {
+    statusEl.textContent = '';
+    errEl.textContent = "Couldn't load the live preview on this device — you can still skip ahead to the guide.";
+  }
+}
+
+function stopTryonPreview(){
+  if (tryonState.rafId) {
+    cancelAnimationFrame(tryonState.rafId);
+    tryonState.rafId = null;
+  }
+  if (tryonState.stream) {
+    tryonState.stream.getTracks().forEach(t => t.stop());
+    tryonState.stream = null;
+  }
+  const canvas = document.getElementById('tryon-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  const placeholder = document.getElementById('tryon-mirror-placeholder');
+  if (placeholder) placeholder.classList.remove('hidden');
+}
+
+function enterLiveGuide(){
+  if (tryonState.rafId) {
+    cancelAnimationFrame(tryonState.rafId);
+    tryonState.rafId = null;
+  }
+  if (tryonState.stream) {
+    state.stream = tryonState.stream;
+    tryonState.stream = null;
+    document.getElementById('video').srcObject = state.stream;
+    document.getElementById('mirror-placeholder').classList.add('hidden');
+  }
+  document.getElementById('tryon-screen').classList.add('hidden');
+  renderStepTrack();
+  renderStep();
+  document.getElementById('live-screen').classList.remove('hidden');
+}
+
+document.getElementById('tryon-camera-btn').addEventListener('click', startTryonPreview);
+document.getElementById('tryon-continue-btn').addEventListener('click', enterLiveGuide);
+document.getElementById('tryon-skip-btn').addEventListener('click', () => {
+  if (tryonState.stream) { tryonState.stream.getTracks().forEach(t => t.stop()); tryonState.stream = null; }
+  enterLiveGuide();
+});
+document.getElementById('tryon-back').addEventListener('click', () => {
+  stopTryonPreview();
+  resetToSetup();
+});
 
 // ---------- Save completed look ----------
 document.getElementById('save-look-btn').addEventListener('click', () => {
