@@ -4,10 +4,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { content, messages, system } = req.body;
+    const { content, messages, system, model } = req.body;
 
     const anthropicBody = {
-      model: 'claude-sonnet-5',
+      model: model || 'claude-sonnet-5',
       max_tokens: 4096,
       messages: messages || [{ role: 'user', content }],
     };

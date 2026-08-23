@@ -809,7 +809,7 @@
 
     <!-- LOADING (step generation) -->
     <div id="loading-screen" class="hidden">
-      <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
+      <div class="loading-line"><div class="spinner"></div> <span id="loading-text">Putting your steps together…</span></div>
     </div>
 
     <!-- TRY-ON PREVIEW (live camera filter, before the guide starts) -->
@@ -988,6 +988,12 @@
 </nav>
 
 <script>
+// Sonnet is used everywhere else (vision feedback needs real image reasoning), but step
+// generation is pure structured-JSON formatting with no reasoning required -- a small/fast
+// model does that just as well and finishes in a fraction of the time, which matters a lot
+// here since it's the one call the user is blocked on with nothing to look at yet.
+const FAST_TEXT_MODEL = 'claude-haiku-4-5-20251001';
+
 const state = {
   occasion: 'Everyday',
   neededProducts: [],
@@ -997,11 +1003,14 @@ const state = {
 };
 
 // ---------- Claude helper (calls OUR backend, not Anthropic directly) ----------
-async function callClaude(content) {
+// `model` defaults server-side to claude-sonnet-5; step generation below passes a
+// faster model explicitly since that call is plain JSON formatting, not reasoning
+// or vision, and its latency is the biggest lag in the whole app (see FAST_TEXT_MODEL).
+async function callClaude(content, model) {
   const response = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content })
+    body: JSON.stringify({ content, model })
   });
   const data = await response.json();
   if (!response.ok) {
@@ -1287,6 +1296,16 @@ function renderNeededProducts(){
     .map(p => `<span class="needed-product-tag">${escapeHtml(p)}</span>`).join('');
 }
 
+// Rotated on the loading screen while the step-generation request is in flight -- the request
+// itself still takes a few seconds, but a changing status line reads as active progress instead
+// of a stuck spinner, which is most of what makes a wait feel long.
+const LOADING_MESSAGES = [
+  "Putting your steps together…",
+  "Picking the right products…",
+  "Matching the look to the occasion…",
+  "Almost ready…",
+];
+
 async function startGuide(){
   const errEl = document.getElementById('setup-error');
   errEl.textContent = '';
@@ -1294,6 +1313,14 @@ async function startGuide(){
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('loading-screen').classList.remove('hidden');
   setTabbarVisible(false);
+
+  const loadingTextEl = document.getElementById('loading-text');
+  let loadingMsgIdx = 0;
+  loadingTextEl.textContent = LOADING_MESSAGES[0];
+  const loadingInterval = setInterval(() => {
+    loadingMsgIdx = (loadingMsgIdx + 1) % LOADING_MESSAGES.length;
+    loadingTextEl.textContent = LOADING_MESSAGES[loadingMsgIdx];
+  }, 1400);
 
   // Start downloading the try-on face-tracking model now, in the background, so it's already
   // loaded (or close to it) by the time the user reaches the preview screen -- silently ignore a
@@ -1304,11 +1331,11 @@ async function startGuide(){
 
 Match the intensity, finish, and product choices to what this occasion actually calls for — don't default to the same safe, natural routine regardless of occasion. As a guide: Everyday should stay light, quick, and low-maintenance. Going out or a date should have a soft, romantic glow. A Party or night out should be bold — glittery or shimmery eyeshadow, richer color, and long-wearing/waterproof formulas called out where they matter (long-wear foundation, waterproof mascara, a transfer-resistant lip) so it actually holds up under lights and dancing, not a toned-down version of the look. For any other occasion, infer the right vibe and intensity from what they described.
 
-Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. There is no fixed step count; use as many steps as the look genuinely needs.
+Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion. Use however many steps the look genuinely needs, typically 8-11, and never more than 12.
 
-First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. For each step give:
+First list every product the routine needs as "productsNeeded" (short common names, e.g. "concealer", "brow gel", lowercase, no duplicates). Then give the ordered steps. Keep every field short — this is read on a phone screen, not an essay. For each step give:
 - "title": 3-5 words
-- "instructions": one encouraging, beginner-friendly sentence on how to do it
+- "instructions": one short, encouraging sentence (max 20 words) on how to do it
 - "product": the product used for that step (must match one of the productsNeeded entries)
 - "zone": exactly one of: "forehead", "brows", "eyelids", "under-eyes", "cheeks", "nose", "lips", "jawline", "chin", "all-over" — pick whichever face area this product actually goes on
 - "markerCount": a whole number 1-6 for how many placement dots to show (e.g. blush is usually 4 — two per cheek, concealer is usually 2 — one under each eye, lipstick is usually 1)
@@ -1319,12 +1346,13 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
 {"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","markerCount":1,"diagramNote":"","color":""}]}`;
 
   try {
-    const raw = await callClaude([{ type: "text", text: prompt }]);
+    const raw = await callClaude([{ type: "text", text: prompt }], FAST_TEXT_MODEL);
     const parsed = JSON.parse(stripFences(raw));
     state.steps = parsed.steps || [];
     state.neededProducts = parsed.productsNeeded || [];
     if (!state.steps.length) throw new Error('empty');
     state.currentStep = 0;
+    clearInterval(loadingInterval);
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('occasion-pill').textContent = state.occasion;
     document.getElementById('tryon-occasion-pill').textContent = state.occasion;
@@ -1332,6 +1360,7 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     tryonState.colors = deriveLookColors();
     document.getElementById('tryon-screen').classList.remove('hidden');
   } catch (err) {
+    clearInterval(loadingInterval);
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('setup-screen').classList.remove('hidden');
     setTabbarVisible(true);
