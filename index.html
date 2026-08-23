@@ -198,6 +198,7 @@
   }
   .occasion-more:hover{ color:var(--pink); }
   .needed-products{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+  .needed-products-inline{ margin-bottom:18px; }
   .needed-product-tag{
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
@@ -851,17 +852,16 @@
 
       <span class="field-label">Occasion</span>
       <div class="chips" id="occasion-chips">
-        <div class="chip" data-occasion="School"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M8 8V6a4 4 0 0 1 8 0v2"/><rect x="5" y="8" width="14" height="13" rx="3"/><rect x="9" y="12" width="6" height="5" rx="1"/></svg></span>School</div>
-        <div class="chip" data-occasion="Date"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M15 4a8 8 0 1 0 0 16 9 9 0 0 1 0-16Z"/></svg></span>Date</div>
+        <div class="chip active" data-occasion="Everyday"><span class="chip-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>Everyday</div>
+        <div class="chip" data-occasion="Date"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M15 4a8 8 0 1 0 0 16 9 9 0 0 1 0-16Z"/></svg></span>Going out/Date</div>
         <div class="chip" data-occasion="Party"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M12 2 14 10 22 12 14 14 12 22 10 14 2 12 10 10 Z"/></svg></span>Party</div>
-        <div class="chip hidden" data-occasion="Everyday"><span class="chip-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>Everyday</div>
         <div class="chip hidden" data-occasion="Other"><span class="chip-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 7l12 10M18 7 6 17"/></svg></span>Other</div>
       </div>
       <button class="occasion-more" id="occasion-more-btn">▾ More options</button>
       <input class="occasion-other hidden" id="occasion-other-input" type="text" maxlength="60" placeholder="Tell me the occasion — e.g. prom, photoshoot, wedding guest">
+      <button class="primary-btn hidden" id="other-start-btn">Start my live guide</button>
 
       <div class="active-look-badge hidden" id="active-look-badge"></div>
-      <button class="primary-btn" id="start-btn">Start my live guide</button>
       <p class="error-line" id="setup-error"></p>
 
 
@@ -917,8 +917,11 @@
     <div id="live-screen" class="hidden">
       <div class="live-header">
         <button class="back-link" id="back-btn">← start over</button>
-        <span class="price-pill" id="occasion-pill">School</span>
+        <span class="price-pill" id="occasion-pill">Everyday</span>
       </div>
+
+      <span class="field-label">You'll need</span>
+      <div class="needed-products needed-products-inline" id="needed-products-list"></div>
 
       <div class="step-track" id="step-track"></div>
 
@@ -977,16 +980,6 @@
     <!-- LOADING (step generation) -->
     <div id="loading-screen" class="hidden">
       <div class="loading-line"><div class="spinner"></div> Putting your steps together…</div>
-    </div>
-
-    <!-- SHOPPING LIST (what you'll need, before the live guide) -->
-    <div id="shopping-list-screen" class="hidden">
-      <button class="back-link" id="shopping-list-back" style="margin-bottom:16px;">← start over</button>
-      <span class="eyebrow">What you'll need</span>
-      <h1 class="headline">Here's your kit for this look.</h1>
-      <p class="sub">Gather these before you start — missing something? No worries, you can swap it for an alternative once you're in a step.</p>
-      <div class="needed-products" id="needed-products-list"></div>
-      <button class="primary-btn" id="shopping-list-continue">Got it, let's start →</button>
     </div>
 
     <!-- DONE SCREEN -->
@@ -1153,7 +1146,7 @@
 
 <script>
 const state = {
-  occasion: 'School',
+  occasion: 'Everyday',
   lookStyle: null,
   neededProducts: [],
   steps: [],
@@ -1386,7 +1379,7 @@ const LOOKS = [
   { id:'bold-glam', name:'Bold Glam', tag:'Party', art:'bold-glam',
     desc:'Winged liner, a bold lip, and glow that reads from across the room.',
     products:'liquid eyeliner, bold red lipstick, highlighter, mascara' },
-  { id:'clean-girl', name:'Clean Girl', tag:'School', art:'clean-girl',
+  { id:'clean-girl', name:'Clean Girl', tag:'Everyday', art:'clean-girl',
     desc:'Minimal, skin-first, glossy — five minutes and out the door.',
     products:'concealer, brow gel, lip oil, mascara' },
   { id:'golden-hour', name:'Golden Hour Glam', tag:'Party', art:'golden-hour',
@@ -1484,10 +1477,8 @@ function useLookAsGuide(look){
   document.querySelectorAll('#occasion-chips .chip').forEach(c => c.classList.remove('active'));
   const matchingChip = document.querySelector(`#occasion-chips .chip[data-occasion="${look.tag}"]`);
   if (matchingChip) {
-    if (matchingChip.dataset.occasion === 'Everyday' || matchingChip.dataset.occasion === 'Other') {
-      document.querySelectorAll('#occasion-chips .chip').forEach(c => {
-        if (c.dataset.occasion === 'Everyday' || c.dataset.occasion === 'Other') c.classList.remove('hidden');
-      });
+    if (matchingChip.dataset.occasion === 'Other') {
+      document.querySelector('#occasion-chips .chip[data-occasion="Other"]').classList.remove('hidden');
       document.getElementById('occasion-more-btn').textContent = '▴ Fewer options';
     }
     matchingChip.classList.add('active');
@@ -1495,6 +1486,7 @@ function useLookAsGuide(look){
   state.occasion = look.tag;
   state.lookStyle = { name: look.name, desc: look.desc, products: look.products };
   showActiveLookBadge();
+  startGuide();
 }
 
 function showActiveLookBadge(){
@@ -1720,32 +1712,39 @@ function setupChipGroup(containerId, onSelect){
 
 setupChipGroup('occasion-chips', (val) => {
   const otherInput = document.getElementById('occasion-other-input');
+  const otherStartBtn = document.getElementById('other-start-btn');
   state.lookStyle = null;
   showActiveLookBadge();
   if (val === 'Other') {
     otherInput.classList.remove('hidden');
     otherInput.focus();
+    otherStartBtn.classList.remove('hidden');
     state.occasion = otherInput.value.trim() || 'Other';
   } else {
     otherInput.classList.add('hidden');
+    otherStartBtn.classList.add('hidden');
     state.occasion = val;
+    startGuide();
   }
 });
-document.querySelector('.chip[data-occasion="School"]').classList.add('active');
 document.getElementById('occasion-other-input').addEventListener('input', (e) => {
   if (document.querySelector('#occasion-chips .chip[data-occasion="Other"]').classList.contains('active')) {
     state.occasion = e.target.value.trim() || 'Other';
   }
 });
+document.getElementById('occasion-other-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && state.occasion.trim()) { e.preventDefault(); startGuide(); }
+});
+document.getElementById('other-start-btn').addEventListener('click', () => {
+  if (state.occasion.trim()) startGuide();
+});
 
 // ---------- Occasion: expand to show the rest of the options ----------
 document.getElementById('occasion-more-btn').addEventListener('click', () => {
   const btn = document.getElementById('occasion-more-btn');
-  document.querySelectorAll('#occasion-chips .chip').forEach(c => {
-    if (c.dataset.occasion === 'Everyday' || c.dataset.occasion === 'Other') c.classList.toggle('hidden');
-  });
-  const nowHidden = document.querySelector('#occasion-chips .chip[data-occasion="Everyday"]').classList.contains('hidden');
-  btn.textContent = nowHidden ? '▾ More options' : '▴ Fewer options';
+  const otherChip = document.querySelector('#occasion-chips .chip[data-occasion="Other"]');
+  otherChip.classList.toggle('hidden');
+  btn.textContent = otherChip.classList.contains('hidden') ? '▾ More options' : '▴ Fewer options';
 });
 
 // ---------- Start: generate steps ----------
@@ -1754,7 +1753,7 @@ function renderNeededProducts(){
     .map(p => `<span class="needed-product-tag">${escapeHtml(p)}</span>`).join('');
 }
 
-document.getElementById('start-btn').addEventListener('click', async () => {
+async function startGuide(){
   const errEl = document.getElementById('setup-error');
   errEl.textContent = '';
 
@@ -1768,7 +1767,7 @@ document.getElementById('start-btn').addEventListener('click', async () => {
 
   const prompt = `You are a warm, encouraging makeup coach for teenagers and total beginners. The user is getting ready for: "${state.occasion}". They haven't told you what products they own, so assume they need to gather a normal beginner kit for this look.${styleContext}
 
-Match the intensity, finish, and product choices to what this occasion actually calls for — don't default to the same safe, natural routine regardless of occasion. As a guide: School or Everyday should stay light, quick, and low-maintenance. A Date should have a soft, romantic glow. A Party or night out should be bold — glittery or shimmery eyeshadow, richer color, and long-wearing/waterproof formulas called out where they matter (long-wear foundation, waterproof mascara, a transfer-resistant lip) so it actually holds up under lights and dancing, not a toned-down version of the look. For any other occasion, infer the right vibe and intensity from what they described.
+Match the intensity, finish, and product choices to what this occasion actually calls for — don't default to the same safe, natural routine regardless of occasion. As a guide: Everyday should stay light, quick, and low-maintenance. Going out or a date should have a soft, romantic glow. A Party or night out should be bold — glittery or shimmery eyeshadow, richer color, and long-wearing/waterproof formulas called out where they matter (long-wear foundation, waterproof mascara, a transfer-resistant lip) so it actually holds up under lights and dancing, not a toned-down version of the look. For any other occasion, infer the right vibe and intensity from what they described.
 
 Create a complete, ordered makeup routine covering every typical stage for this look (skincare prep, primer, concealer/foundation, contour or bronzer if relevant, blush, eyes, brows, lips, setting) — pick specific, beginner-friendly product types suited to the occasion${state.lookStyle ? ' and the specific look described above' : ''}. There is no fixed step count; use as many steps as the look genuinely needs.
 
@@ -1794,34 +1793,27 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('occasion-pill').textContent = state.lookStyle ? state.lookStyle.name : state.occasion;
     renderNeededProducts();
-    document.getElementById('shopping-list-screen').classList.remove('hidden');
+    renderStepTrack();
+    renderStep();
+    document.getElementById('live-screen').classList.remove('hidden');
   } catch (err) {
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('setup-screen').classList.remove('hidden');
     setTabbarVisible(true);
     errEl.textContent = "Something went wrong building your steps — try again.";
   }
-});
-
-document.getElementById('shopping-list-continue').addEventListener('click', () => {
-  document.getElementById('shopping-list-screen').classList.add('hidden');
-  renderStepTrack();
-  renderStep();
-  document.getElementById('live-screen').classList.remove('hidden');
-});
+}
 
 // ---------- Back / restart ----------
 function resetToSetup(){
   stopCamera();
   document.getElementById('live-screen').classList.add('hidden');
-  document.getElementById('shopping-list-screen').classList.add('hidden');
   document.getElementById('done-screen').classList.add('hidden');
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('feedback-card').classList.remove('show');
   setTabbarVisible(true);
 }
 document.getElementById('back-btn').addEventListener('click', resetToSetup);
-document.getElementById('shopping-list-back').addEventListener('click', resetToSetup);
 document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 
 // ---------- Save completed look ----------
