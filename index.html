@@ -1803,6 +1803,11 @@ async function startGuide(){
   document.getElementById('loading-screen').classList.remove('hidden');
   setTabbarVisible(false);
 
+  // Start downloading the try-on face-tracking model now, in the background, so it's already
+  // loaded (or close to it) by the time the user reaches the preview screen -- silently ignore a
+  // failure here, startTryonPreview() surfaces it properly if the user actually opens the preview.
+  prefetchTryonLandmarker().catch(() => {});
+
   const styleContext = state.lookStyle
     ? `\n\nThey specifically picked this look from the gallery: "${state.lookStyle.name}" — ${state.lookStyle.desc} Build the routine around that exact style (the same intensity, colors, and technique it describes) rather than a generic version of the occasion. Typical products for this look: ${state.lookStyle.products}.`
     : '';
@@ -1869,7 +1874,7 @@ document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 // photorealistic render, and the landmark regions below are the standard/documented MediaPipe
 // point groups -- they haven't been tuned against a real face, so placement may need small
 // adjustments once tested on-device.
-const tryonState = { stream: null, rafId: null, landmarker: null, colors: {} };
+const tryonState = { stream: null, rafId: null, landmarker: null, landmarkerPromise: null, colors: {} };
 
 const TRYON_LIPS = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
 const TRYON_EYE_LEFT = { upper: [246,161,160,159,158,157,173] };
@@ -1890,48 +1895,90 @@ function hexToRgba(hex, alpha){
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+// All three use 'multiply' blend + a soft blur so the color tints the video's existing skin
+// texture/shading instead of sitting on top as a flat painted patch -- the single biggest lever
+// for realism available in 2D canvas without a trained blend model.
 function drawTryonLips(ctx, points, w, h, color){
+  const blur = Math.max(1.5, w * 0.005);
+  ctx.save();
+  ctx.filter = `blur(${blur}px)`;
+  ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
   TRYON_LIPS.forEach((idx, i) => {
     const p = points[idx];
     if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
   });
   ctx.closePath();
-  ctx.fillStyle = hexToRgba(color, 0.55);
+  ctx.fillStyle = hexToRgba(color, 0.75);
   ctx.fill();
+  ctx.restore();
+
+  // A small soft gloss highlight on the lower lip so it doesn't read as flat matte color.
+  const lowerLipIdx = [17, 314, 405, 321, 375, 291];
+  let cx = 0, cy = 0;
+  lowerLipIdx.forEach(i => { cx += points[i].x; cy += points[i].y; });
+  cx = (cx / lowerLipIdx.length) * w;
+  cy = (cy / lowerLipIdx.length) * h;
+  const glossR = w * 0.03;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const gloss = ctx.createRadialGradient(cx, cy, 0, cx, cy, glossR);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.35)');
+  gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, glossR, 0, Math.PI * 2);
+  ctx.fillStyle = gloss;
+  ctx.fill();
+  ctx.restore();
 }
 
 function drawTryonEyeshadow(ctx, points, eye, w, h, color){
   const upperPts = eye.upper.map(i => points[i]);
-  const lift = 0.035;
+  const lift = 0.045;
+  const blur = Math.max(1.5, w * 0.006);
+  const bottom = upperPts.map(p => ({ x: p.x * w, y: p.y * h }));
+  const top = upperPts.map(p => ({ x: p.x * w, y: (p.y - lift) * h }));
+
+  ctx.save();
+  ctx.filter = `blur(${blur}px)`;
+  ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
-  upperPts.forEach((p, i) => {
-    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
-  });
-  for (let i = upperPts.length - 1; i >= 0; i--) {
-    ctx.lineTo(upperPts[i].x * w, (upperPts[i].y - lift) * h);
-  }
+  bottom.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+  for (let i = top.length - 1; i >= 0; i--) ctx.lineTo(top[i].x, top[i].y);
   ctx.closePath();
-  ctx.fillStyle = hexToRgba(color, 0.35);
+
+  // Dense at the lash line, fading toward the brow -- reads as blended shadow, not a flat band.
+  const midBottom = bottom[Math.floor(bottom.length / 2)];
+  const midTop = top[Math.floor(top.length / 2)];
+  const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
+  grad.addColorStop(0, hexToRgba(color, 0.65));
+  grad.addColorStop(1, hexToRgba(color, 0));
+  ctx.fillStyle = grad;
   ctx.fill();
+  ctx.restore();
 }
 
 function drawTryonCheek(ctx, points, cheek, w, h, color){
   const eyeP = points[cheek.eyeCorner], mouthP = points[cheek.mouthCorner];
   const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
   const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
-  const r = w * 0.09;
+  const r = w * 0.1;
+  const blur = Math.max(2, w * 0.01);
+  ctx.save();
+  ctx.filter = `blur(${blur}px)`;
+  ctx.globalCompositeOperation = 'multiply';
   const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-  grad.addColorStop(0, hexToRgba(color, 0.4));
+  grad.addColorStop(0, hexToRgba(color, 0.5));
+  grad.addColorStop(0.7, hexToRgba(color, 0.25));
   grad.addColorStop(1, hexToRgba(color, 0));
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fillStyle = grad;
   ctx.fill();
+  ctx.restore();
 }
 
-async function loadTryonLandmarker(){
-  if (tryonState.landmarker) return tryonState.landmarker;
+async function loadTryonLandmarkerImpl(){
   const { FaceLandmarker, FilesetResolver } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
   const filesetResolver = await FilesetResolver.forVisionTasks(
     'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
@@ -1955,6 +2002,36 @@ async function loadTryonLandmarker(){
   return landmarker;
 }
 
+// Kicks off the (few-MB) model download the moment we know a preview might be needed, instead of
+// waiting for "Enable camera" -- called from startGuide() so it downloads in the background while
+// Claude is still generating the routine, and the promise is cached so calling this again (e.g.
+// when the user actually taps "Enable camera") just awaits the same in-flight/finished load rather
+// than starting over.
+function prefetchTryonLandmarker(){
+  if (!tryonState.landmarkerPromise) {
+    tryonState.landmarkerPromise = loadTryonLandmarkerImpl();
+  }
+  return tryonState.landmarkerPromise;
+}
+
+// Raw per-frame landmark detection jitters slightly even when the face is still, which reads as
+// the color overlay "shimmering" -- an exponential low-pass filter across frames smooths that out
+// at the cost of a tiny bit of lag, which is a much better trade for something that's meant to look
+// like paint sitting on skin rather than a twitchy tracking demo.
+let tryonSmoothed = null;
+function smoothTryonLandmarks(face){
+  if (!tryonSmoothed) {
+    tryonSmoothed = face.map(p => ({ x: p.x, y: p.y }));
+    return tryonSmoothed;
+  }
+  const a = 0.45;
+  for (let i = 0; i < face.length; i++) {
+    tryonSmoothed[i].x += (face[i].x - tryonSmoothed[i].x) * a;
+    tryonSmoothed[i].y += (face[i].y - tryonSmoothed[i].y) * a;
+  }
+  return tryonSmoothed;
+}
+
 function renderTryonFrame(){
   const video = document.getElementById('tryon-video');
   const canvas = document.getElementById('tryon-canvas');
@@ -1970,8 +2047,9 @@ function renderTryonFrame(){
   ctx.clearRect(0, 0, w, h);
 
   const result = tryonState.landmarker.detectForVideo(video, performance.now());
-  const face = result.faceLandmarks && result.faceLandmarks[0];
-  if (face) {
+  const rawFace = result.faceLandmarks && result.faceLandmarks[0];
+  if (rawFace) {
+    const face = smoothTryonLandmarks(rawFace);
     const colors = tryonState.colors;
     if (colors.eyes) {
       drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes);
@@ -1982,6 +2060,8 @@ function renderTryonFrame(){
       drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks);
     }
     if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips);
+  } else {
+    tryonSmoothed = null;
   }
   tryonState.rafId = requestAnimationFrame(renderTryonFrame);
 }
@@ -1990,8 +2070,17 @@ async function startTryonPreview(){
   const statusEl = document.getElementById('tryon-status');
   const errEl = document.getElementById('tryon-error');
   errEl.textContent = '';
+  statusEl.textContent = 'Getting your preview ready…';
+
+  // Camera permission and the face-tracking model don't depend on each other, so request/load
+  // both at once instead of one after the other -- the model was also likely already prefetched
+  // during step generation, so this usually just awaits an already-finished (or nearly finished)
+  // promise rather than starting a fresh multi-second download here.
+  const cameraPromise = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+  const landmarkerPromise = prefetchTryonLandmarker();
+
   try {
-    tryonState.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    tryonState.stream = await cameraPromise;
     const video = document.getElementById('tryon-video');
     video.srcObject = tryonState.stream;
     document.getElementById('tryon-mirror-placeholder').classList.add('hidden');
@@ -1999,14 +2088,14 @@ async function startTryonPreview(){
       await new Promise(resolve => { video.onloadedmetadata = resolve; });
     }
   } catch (err) {
+    statusEl.textContent = '';
     document.getElementById('tryon-mirror-placeholder').querySelector('span').textContent =
       "Camera access was blocked — allow it in your browser settings for a live preview.";
     return;
   }
 
-  statusEl.textContent = 'Loading face tracking…';
   try {
-    await loadTryonLandmarker();
+    await landmarkerPromise;
     statusEl.textContent = '';
     renderTryonFrame();
   } catch (err) {
@@ -2024,6 +2113,7 @@ function stopTryonPreview(){
     tryonState.stream.getTracks().forEach(t => t.stop());
     tryonState.stream = null;
   }
+  tryonSmoothed = null;
   const canvas = document.getElementById('tryon-canvas');
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   const placeholder = document.getElementById('tryon-mirror-placeholder');
@@ -2274,7 +2364,7 @@ function renderStep(){
   document.getElementById('next-btn').disabled = state.currentStep === state.steps.length - 1;
   updateStepTrack();
   renderFaceDiagram(step);
-  if (readAloudOn) speak(`${step.title}. ${step.instructions}`);
+  if (readAloudOn) speakStep(step.title, step.instructions);
 }
 
 document.getElementById('prev-btn').addEventListener('click', () => {
@@ -2301,7 +2391,7 @@ function pickPreferredVoice(){
   if (!voices.length) return null;
   const englishVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
   const pool = englishVoices.length ? englishVoices : voices;
-  const preferredNames = ['samantha', 'ava', 'serena', 'moira', 'allison', 'susan', 'karen', 'zira', 'victoria', 'fiona', 'google uk english female'];
+  const preferredNames = ['samantha', 'ava', 'serena', 'moira', 'allison', 'susan', 'karen', 'zira', 'victoria', 'fiona', 'aria', 'jenny', 'sonia', 'natasha', 'libby', 'google uk english female'];
 
   // A device's "enhanced"/"premium"/"neural" voice variant (when downloaded) sounds
   // noticeably less robotic than the default compact one of the same name.
@@ -2323,14 +2413,28 @@ if ('speechSynthesis' in window) {
 }
 
 // ---------- Check my progress (live vision feedback) ----------
+function speakUtterance(text){
+  const utter = new SpeechSynthesisUtterance(text);
+  if (preferredVoice) utter.voice = preferredVoice;
+  utter.rate = 0.93;
+  utter.pitch = 0.97;
+  window.speechSynthesis.speak(utter);
+}
+
 function speak(text){
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  if (preferredVoice) utter.voice = preferredVoice;
-  utter.rate = 0.92;
-  utter.pitch = 1.0;
-  window.speechSynthesis.speak(utter);
+  speakUtterance(text);
+}
+
+// Step reads are queued as two separate utterances (title, then instructions) instead of one
+// run-on sentence -- speechSynthesis gives each utterance its own intonation arc, so this reads
+// as a natural "here's the step... here's how" beat instead of a flat single-breath sentence.
+function speakStep(title, instructions){
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  speakUtterance(title);
+  speakUtterance(instructions);
 }
 
 // ---------- Don't have a product? Get a quick substitute suggestion ----------
