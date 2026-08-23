@@ -1913,6 +1913,13 @@ function hexToRgba(hex, alpha){
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
+function hexToRgbaDarken(hex, factor, alpha){
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * factor);
+  const g = Math.round(((n >> 8) & 255) * factor);
+  const b = Math.round((n & 255) * factor);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 // All three use 'multiply' blend + a soft blur so the color tints the video's existing skin
 // texture/shading instead of sitting on top as a flat painted patch -- the single biggest lever
@@ -1939,6 +1946,21 @@ function drawTryonLips(ctx, points, w, h, color, scale){
   ctx.fill('evenodd');
   ctx.restore();
 
+  // A thin darker liner along the outer edge -- a flat fill alone reads as a color-fill tool, not
+  // lipstick; real lip products (and lip filters) always carry a slightly deeper edge line.
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.beginPath();
+  TRYON_LIPS_OUTER.forEach((idx, i) => {
+    const p = points[idx];
+    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
+  });
+  ctx.closePath();
+  ctx.lineWidth = Math.max(1, scale * 0.018);
+  ctx.strokeStyle = hexToRgbaDarken(color, 0.55, 0.5);
+  ctx.stroke();
+  ctx.restore();
+
   // A small soft gloss highlight on the lower lip so it doesn't read as flat matte color.
   const lowerLipIdx = [17, 314, 405, 321, 375, 291];
   let cx = 0, cy = 0;
@@ -1960,32 +1982,36 @@ function drawTryonLips(ctx, points, w, h, color, scale){
 
 function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   const upperPts = eye.upper.map(i => points[i]);
-  // "Up toward the brow" and how far to reach are both derived from this eye's own corners and
-  // size, not a fixed screen-space offset -- so the band tracks correctly as the head tilts and
-  // scales correctly as the face moves closer to or further from the camera.
+  // "Up toward the brow" is derived from this eye's own corners, not a fixed screen-space
+  // direction -- so the band tracks correctly as the head tilts.
   const up = eyeUpVector(points, eye.corner1, eye.corner2);
-  const lift = scale * 0.5;
-  const blur = Math.max(1.5, scale * 0.05);
   const bottom = upperPts.map(p => ({ x: p.x * w, y: p.y * h }));
-  const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
 
-  ctx.save();
-  ctx.filter = `blur(${blur}px)`;
-  ctx.globalCompositeOperation = 'multiply';
-  ctx.beginPath();
-  bottom.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-  for (let i = top.length - 1; i >= 0; i--) ctx.lineTo(top[i].x, top[i].y);
-  ctx.closePath();
-
-  // Dense at the lash line, fading toward the brow -- reads as blended shadow, not a flat band.
-  const midBottom = bottom[Math.floor(bottom.length / 2)];
-  const midTop = top[Math.floor(top.length / 2)];
-  const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
-  grad.addColorStop(0, hexToRgba(color, 0.65));
-  grad.addColorStop(1, hexToRgba(color, 0));
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.restore();
+  // One flat band always reads as a single stripe of color; real application (and good filters)
+  // blend a wide, soft "transition" wash high toward the brow, then a denser color close to the
+  // lash line on top of it -- draw the same shape twice at different reach/opacity/blur for that.
+  const drawBand = (liftMult, peakAlpha, blurMult) => {
+    const lift = scale * liftMult;
+    const blur = Math.max(1.5, scale * blurMult);
+    const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
+    ctx.save();
+    ctx.filter = `blur(${blur}px)`;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.beginPath();
+    bottom.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+    for (let i = top.length - 1; i >= 0; i--) ctx.lineTo(top[i].x, top[i].y);
+    ctx.closePath();
+    const midBottom = bottom[Math.floor(bottom.length / 2)];
+    const midTop = top[Math.floor(top.length / 2)];
+    const grad = ctx.createLinearGradient(midBottom.x, midBottom.y, midTop.x, midTop.y);
+    grad.addColorStop(0, hexToRgba(color, peakAlpha));
+    grad.addColorStop(1, hexToRgba(color, 0));
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+  };
+  drawBand(0.85, 0.28, 0.09); // wide soft wash
+  drawBand(0.5, 0.65, 0.05);  // denser definition near the lash line
 }
 
 function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
@@ -2044,22 +2070,37 @@ function prefetchTryonLandmarker(){
   return tryonState.landmarkerPromise;
 }
 
-// Raw per-frame landmark detection jitters slightly even when the face is still, which reads as
-// the color overlay "shimmering" -- an exponential low-pass filter across frames smooths that out
-// at the cost of a tiny bit of lag, which is a much better trade for something that's meant to look
-// like paint sitting on skin rather than a twitchy tracking demo.
-let tryonSmoothed = null;
-function smoothTryonLandmarks(face){
-  if (!tryonSmoothed) {
-    tryonSmoothed = face.map(p => ({ x: p.x, y: p.y }));
-    return tryonSmoothed;
+// A "One Euro Filter" (Casiez et al.) per landmark coordinate -- the standard smoothing technique
+// real-time AR trackers use, including production filters. Unlike a flat exponential smooth, it
+// adapts to how fast each point is moving: heavy smoothing while the face is still (kills jitter),
+// automatically easing off during a fast head turn (kills lag) -- a fixed smoothing factor can only
+// ever be a compromise between those two, this tracks whichever one currently matters.
+function makeOneEuroFilter(minCutoff, beta, dCutoff){
+  let xPrev = null, dxPrev = 0, tPrev = null;
+  const alpha = (cutoff, dt) => 1 / (1 + (1 / (2 * Math.PI * cutoff)) / dt);
+  return (x, t) => {
+    if (tPrev === null) { xPrev = x; dxPrev = 0; tPrev = t; return x; }
+    const dt = Math.max(t - tPrev, 1e-3);
+    const dx = (x - xPrev) / dt;
+    const aD = alpha(dCutoff, dt);
+    const edx = dxPrev + aD * (dx - dxPrev);
+    const cutoff = minCutoff + beta * Math.abs(edx);
+    const aX = alpha(cutoff, dt);
+    const ex = xPrev + aX * (x - xPrev);
+    xPrev = ex; dxPrev = edx; tPrev = t;
+    return ex;
+  };
+}
+
+let tryonFilters = null;
+function smoothTryonLandmarks(face, t){
+  if (!tryonFilters || tryonFilters.length !== face.length) {
+    tryonFilters = face.map(() => ({
+      x: makeOneEuroFilter(1.0, 0.3, 1.0),
+      y: makeOneEuroFilter(1.0, 0.3, 1.0)
+    }));
   }
-  const a = 0.45;
-  for (let i = 0; i < face.length; i++) {
-    tryonSmoothed[i].x += (face[i].x - tryonSmoothed[i].x) * a;
-    tryonSmoothed[i].y += (face[i].y - tryonSmoothed[i].y) * a;
-  }
-  return tryonSmoothed;
+  return face.map((p, i) => ({ x: tryonFilters[i].x(p.x, t), y: tryonFilters[i].y(p.y, t) }));
 }
 
 function renderTryonFrame(){
@@ -2076,10 +2117,11 @@ function renderTryonFrame(){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, w, h);
 
-  const result = tryonState.landmarker.detectForVideo(video, performance.now());
+  const now = performance.now();
+  const result = tryonState.landmarker.detectForVideo(video, now);
   const rawFace = result.faceLandmarks && result.faceLandmarks[0];
   if (rawFace) {
-    const face = smoothTryonLandmarks(rawFace);
+    const face = smoothTryonLandmarks(rawFace, now / 1000);
     const scale = landmarkFaceScale(face, w, h);
     const colors = tryonState.colors;
     if (colors.eyes) {
@@ -2092,7 +2134,7 @@ function renderTryonFrame(){
     }
     if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips, scale);
   } else {
-    tryonSmoothed = null;
+    tryonFilters = null;
   }
   tryonState.rafId = requestAnimationFrame(renderTryonFrame);
 }
@@ -2144,7 +2186,7 @@ function stopTryonPreview(){
     tryonState.stream.getTracks().forEach(t => t.stop());
     tryonState.stream = null;
   }
-  tryonSmoothed = null;
+  tryonFilters = null;
   const canvas = document.getElementById('tryon-canvas');
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   const placeholder = document.getElementById('tryon-mirror-placeholder');
