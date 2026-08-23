@@ -1876,11 +1876,30 @@ document.getElementById('restart-btn').addEventListener('click', resetToSetup);
 // adjustments once tested on-device.
 const tryonState = { stream: null, rafId: null, landmarker: null, landmarkerPromise: null, colors: {} };
 
-const TRYON_LIPS = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
-const TRYON_EYE_LEFT = { upper: [246,161,160,159,158,157,173] };
-const TRYON_EYE_RIGHT = { upper: [466,388,387,386,385,384,398] };
+const TRYON_LIPS_OUTER = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+const TRYON_LIPS_INNER = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
+const TRYON_EYE_LEFT = { upper: [246,161,160,159,158,157,173], corner1: 33, corner2: 133 };
+const TRYON_EYE_RIGHT = { upper: [466,388,387,386,385,384,398], corner1: 362, corner2: 263 };
 const TRYON_CHEEK_LEFT = { eyeCorner: 33, mouthCorner: 61 };
 const TRYON_CHEEK_RIGHT = { eyeCorner: 263, mouthCorner: 291 };
+
+// A production filter never sizes or orients its overlays in raw screen pixels/directions -- it
+// anchors everything to the face itself, so the effect holds up as someone moves closer/further
+// from the camera or tilts their head. These two helpers do that: a scale derived from the
+// (very stable, well-documented) outer-eye-corner distance, and a per-eye "up toward the brow"
+// direction derived from that eye's own corners instead of assuming screen-up is always correct.
+function landmarkFaceScale(points, w, h){
+  const a = points[33], b = points[263];
+  return Math.hypot((a.x - b.x) * w, (a.y - b.y) * h) || 1;
+}
+function eyeUpVector(points, corner1, corner2){
+  const p1 = points[corner1], p2 = points[corner2];
+  let ux = -(p2.y - p1.y), uy = (p2.x - p1.x);
+  const len = Math.hypot(ux, uy) || 1;
+  ux /= len; uy /= len;
+  if (uy > 0) { ux = -ux; uy = -uy; } // keep "up" pointing toward the top of the image
+  return { x: ux, y: uy };
+}
 
 function deriveLookColors(){
   const byZone = {};
@@ -1898,19 +1917,26 @@ function hexToRgba(hex, alpha){
 // All three use 'multiply' blend + a soft blur so the color tints the video's existing skin
 // texture/shading instead of sitting on top as a flat painted patch -- the single biggest lever
 // for realism available in 2D canvas without a trained blend model.
-function drawTryonLips(ctx, points, w, h, color){
-  const blur = Math.max(1.5, w * 0.005);
+function drawTryonLips(ctx, points, w, h, color, scale){
+  const blur = Math.max(1.5, scale * 0.045);
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
   ctx.globalCompositeOperation = 'multiply';
   ctx.beginPath();
-  TRYON_LIPS.forEach((idx, i) => {
+  TRYON_LIPS_OUTER.forEach((idx, i) => {
+    const p = points[idx];
+    if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
+  });
+  ctx.closePath();
+  // The inner mouth loop is added to the same path with an even-odd fill, which punches the
+  // mouth opening back out -- otherwise an open mouth gets painted straight over the teeth.
+  TRYON_LIPS_INNER.forEach((idx, i) => {
     const p = points[idx];
     if (i === 0) ctx.moveTo(p.x * w, p.y * h); else ctx.lineTo(p.x * w, p.y * h);
   });
   ctx.closePath();
   ctx.fillStyle = hexToRgba(color, 0.75);
-  ctx.fill();
+  ctx.fill('evenodd');
   ctx.restore();
 
   // A small soft gloss highlight on the lower lip so it doesn't read as flat matte color.
@@ -1919,7 +1945,7 @@ function drawTryonLips(ctx, points, w, h, color){
   lowerLipIdx.forEach(i => { cx += points[i].x; cy += points[i].y; });
   cx = (cx / lowerLipIdx.length) * w;
   cy = (cy / lowerLipIdx.length) * h;
-  const glossR = w * 0.03;
+  const glossR = scale * 0.22;
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   const gloss = ctx.createRadialGradient(cx, cy, 0, cx, cy, glossR);
@@ -1932,12 +1958,16 @@ function drawTryonLips(ctx, points, w, h, color){
   ctx.restore();
 }
 
-function drawTryonEyeshadow(ctx, points, eye, w, h, color){
+function drawTryonEyeshadow(ctx, points, eye, w, h, color, scale){
   const upperPts = eye.upper.map(i => points[i]);
-  const lift = 0.045;
-  const blur = Math.max(1.5, w * 0.006);
+  // "Up toward the brow" and how far to reach are both derived from this eye's own corners and
+  // size, not a fixed screen-space offset -- so the band tracks correctly as the head tilts and
+  // scales correctly as the face moves closer to or further from the camera.
+  const up = eyeUpVector(points, eye.corner1, eye.corner2);
+  const lift = scale * 0.5;
+  const blur = Math.max(1.5, scale * 0.05);
   const bottom = upperPts.map(p => ({ x: p.x * w, y: p.y * h }));
-  const top = upperPts.map(p => ({ x: p.x * w, y: (p.y - lift) * h }));
+  const top = bottom.map(p => ({ x: p.x + up.x * lift, y: p.y + up.y * lift }));
 
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
@@ -1958,12 +1988,12 @@ function drawTryonEyeshadow(ctx, points, eye, w, h, color){
   ctx.restore();
 }
 
-function drawTryonCheek(ctx, points, cheek, w, h, color){
+function drawTryonCheek(ctx, points, cheek, w, h, color, scale){
   const eyeP = points[cheek.eyeCorner], mouthP = points[cheek.mouthCorner];
   const x = (eyeP.x * 0.45 + mouthP.x * 0.55) * w;
   const y = (eyeP.y * 0.45 + mouthP.y * 0.55) * h;
-  const r = w * 0.1;
-  const blur = Math.max(2, w * 0.01);
+  const r = scale * 0.8;
+  const blur = Math.max(2, scale * 0.08);
   ctx.save();
   ctx.filter = `blur(${blur}px)`;
   ctx.globalCompositeOperation = 'multiply';
@@ -2050,16 +2080,17 @@ function renderTryonFrame(){
   const rawFace = result.faceLandmarks && result.faceLandmarks[0];
   if (rawFace) {
     const face = smoothTryonLandmarks(rawFace);
+    const scale = landmarkFaceScale(face, w, h);
     const colors = tryonState.colors;
     if (colors.eyes) {
-      drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes);
-      drawTryonEyeshadow(ctx, face, TRYON_EYE_RIGHT, w, h, colors.eyes);
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_LEFT, w, h, colors.eyes, scale);
+      drawTryonEyeshadow(ctx, face, TRYON_EYE_RIGHT, w, h, colors.eyes, scale);
     }
     if (colors.cheeks) {
-      drawTryonCheek(ctx, face, TRYON_CHEEK_LEFT, w, h, colors.cheeks);
-      drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks);
+      drawTryonCheek(ctx, face, TRYON_CHEEK_LEFT, w, h, colors.cheeks, scale);
+      drawTryonCheek(ctx, face, TRYON_CHEEK_RIGHT, w, h, colors.cheeks, scale);
     }
-    if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips);
+    if (colors.lips) drawTryonLips(ctx, face, w, h, colors.lips, scale);
   } else {
     tryonSmoothed = null;
   }
