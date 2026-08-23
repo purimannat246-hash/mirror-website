@@ -63,13 +63,73 @@ There is no `package.json`, no dependency manifest, and no test/lint/build tooli
 
 ## Agents
 
-`.claude/agents/` holds six project subagents, each scoped to one part of the site. They exist because the whole app is one 2,700-line `index.html`, so "which part of the file am I allowed to touch, and what breaks if I get it wrong" is the thing worth writing down. Each definition carries the conventions that matter for its area — delegate to the matching one rather than re-explaining the file:
+`.claude/agents/` holds the ten-role "virtual startup team" from
+[purimannat246-hash/Mannat_agents](https://github.com/purimannat246-hash/Mannat_agents),
+vendored into this repo so they load in every session that opens it — including
+cloud sessions, which never see a `~/.claude` install. That repo stays the
+source of truth: edit an agent there, then re-copy into `.claude/agents/` here.
 
-- **`mannat-ui`** — markup and CSS: the tab bar, screens, cards, overlays, spacing, the `:root` design tokens.
-- **`mannat-prompts`** — every prompt string and the code that parses its response (step generation, face scan, chat, feedback, quiz, swaps), plus `api/claude.js`. Owns the rule that a prompt and its parser change together.
-- **`mannat-camera`** — `getUserMedia` streams, frame capture/un-mirroring, `zoneCoords` and the SVG face diagram, step navigation, speech narration.
-- **`mannat-account`** — `localStorage` persistence, the Free-vs-Pro limits, the preview checkout sheet.
-- **`mannat-content`** — copy and static data: `LOOKS`, `ADVICE`, the example review cards, brand quotes, disclaimers.
-- **`mannat-review`** — read-only diff reviewer for the checklist above (escaping, prompt/parser sync, camera cleanup, storage safety, honest-prototype copy).
+```
+                  board-agent (final sign-off, big/risky bets only)
+                        |
+                    ceo-agent (strategy, scope, go/no-go)
+                        |
+              product-manager-agent (spec, user stories, priorities)
+                        |
+      +-----------------+-----------------+
+      |                 |                 |
+design-lead-agent  frontend-engineer-agent  backend-engineer-agent
+      |                 |                 |
+      +--------> security-officer-agent (auth / PII / payments / external input)
+      |
+      +--------> qa-lead-agent (golden path + edge cases)
+                        |
+              devops-release-agent (tests, CI, ship, rollback)
+                        |
+              technical-writer-agent (docs, changelog, release notes)
+```
 
-The boundaries overlap in two known places, and both are called out in the definitions themselves: a new face zone needs both `zoneCoords` (camera) and the step-generation prompt (prompts), and a new look variant needs both the `LOOKS` entry (content) and two CSS gradient rules (ui). An agent that hits one of those reports it back rather than reaching across.
+Two of these roles map onto a repo that has no backend and no test suite —
+read them accordingly: `backend-engineer-agent` owns only `api/claude.js` (a
+deliberately dumb passthrough — see Conventions), and `devops-release-agent`
+has no tests, linter, or build to run, so "verify" here means re-reading the
+diff and deploying to Vercel.
+
+### Invariants any agent must respect
+
+The agents above are generic by design — they know their role, not this
+codebase. Everything they need to know about *this* file is in the sections
+above; these are the ones that are easy to break and expensive to catch late:
+
+- **Escaping.** Any AI-generated or user-typed string interpolated into markup
+  assigned via `.innerHTML` goes through `escapeHtml()` first. Highest-risk
+  sources: chat messages, `state.occasion` (free-typed since the "Other"
+  field), saved routine steps and descriptions, review text, profile name,
+  scan result fields, the face-diagram caption.
+- **Prompt and parser change together.** Every field the parser reads must be
+  a field the prompt asks for. Prompts whose output is `JSON.parse`d must keep
+  demanding raw JSON with no prose and no code fences — there is no schema
+  validation beyond `try/catch`, and a failed parse bounces the user back to
+  setup.
+- **Camera lifecycle.** Every `getUserMedia` has a stop path that stops all
+  tracks and clears the handle. The live guide (`state.stream`) and Scan
+  (`scanState.stream`) never share a handle. Every frame capture un-mirrors
+  via `ctx.translate`/`ctx.scale(-1,1)` and downscales to a 480px max
+  dimension.
+- **Storage.** Reads go through `loadJSON` (try/catch + fallback) and the typed
+  helpers, never raw `localStorage`. Card number, expiry, and CVC are never
+  persisted or transmitted — only `cardLast4`, for display. Nothing stored
+  grows unbounded.
+- **Limits are honest nudges.** Free-vs-Pro gates are client-side only, with no
+  server to enforce them; don't write copy claiming otherwise. A gate added to
+  one write path belongs on every path reaching the same write — that's why
+  the saved-guide cap is checked in both `save-look-btn` and
+  `saveReviewedLook()`.
+- **Honest prototype copy.** The example review cards stay labelled as
+  prototype examples, the Scan and Advice disclaimers stay intact, no medical
+  claims, and nothing implies real pricing, real stock, or real billing.
+- **Project shape.** No new files, dependencies, build tooling, or frameworks;
+  CSS uses the `:root` custom properties. A new face zone needs both
+  `zoneCoords` and the step-generation prompt; a new look variant needs both
+  the `LOOKS` entry and two CSS rules (`.look-art.<variant>` and
+  `.look-featured.<variant>`).
