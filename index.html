@@ -160,7 +160,6 @@
   }
   .occasion-more:hover{ color:var(--pink); }
   .needed-products{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
-  .needed-products-inline{ margin-bottom:18px; }
   .needed-product-tag{
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
@@ -793,11 +792,6 @@
         <span class="price-pill" id="occasion-pill">Everyday</span>
       </div>
 
-      <div id="needed-products-section">
-        <span class="field-label">You'll need</span>
-        <div class="needed-products needed-products-inline" id="needed-products-list"></div>
-      </div>
-
       <div class="step-track" id="step-track"></div>
 
       <div class="mirror-wrap" id="mirror-wrap">
@@ -883,6 +877,21 @@
 
       <button class="primary-btn" id="tryon-continue-btn">Looks good — start the guide</button>
       <button class="ghost-btn" id="tryon-skip-btn">Skip preview</button>
+    </div>
+
+    <!-- SHOPPING LIST (what you'll need, shown once before the step-by-step guide starts) -->
+    <div id="shopping-list-screen" class="hidden">
+      <div class="live-header">
+        <button class="back-link" id="shopping-list-back">← start over</button>
+        <span class="price-pill" id="shopping-list-occasion-pill">Everyday</span>
+      </div>
+      <span class="eyebrow">Shopping list</span>
+      <h1 class="headline">Here's what you'll need.</h1>
+      <p class="sub">Grab these before you start — the guide walks you through every step after.</p>
+
+      <div class="needed-products" id="needed-products-list"></div>
+
+      <button class="primary-btn" id="start-guide-btn">Start the guide</button>
     </div>
 
     <!-- DONE SCREEN -->
@@ -1408,6 +1417,7 @@ Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('occasion-pill').textContent = state.occasion;
     document.getElementById('tryon-occasion-pill').textContent = state.occasion;
+    document.getElementById('shopping-list-occasion-pill').textContent = state.occasion;
     renderNeededProducts();
     tryonState.colors = deriveLookColors();
     tryonState.intensity = getOccasionIntensity(state.occasion);
@@ -1430,6 +1440,7 @@ function resetToSetup(){
   stopTryonPreview();
   document.getElementById('live-screen').classList.add('hidden');
   document.getElementById('tryon-screen').classList.add('hidden');
+  document.getElementById('shopping-list-screen').classList.add('hidden');
   document.getElementById('done-screen').classList.add('hidden');
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('feedback-card').classList.remove('show');
@@ -1902,6 +1913,9 @@ function stopTryonPreview(){
   if (placeholder) placeholder.classList.remove('hidden');
 }
 
+// Hands the camera off from the try-on preview and shows the shopping list -- a dedicated screen
+// (rather than folding the product list into the live guide itself) so every step of the actual
+// guide is just the camera and the step card, with nothing pushing them below the fold.
 function enterLiveGuide(){
   if (tryonState.rafId) {
     cancelAnimationFrame(tryonState.rafId);
@@ -1914,6 +1928,11 @@ function enterLiveGuide(){
     document.getElementById('mirror-placeholder').classList.add('hidden');
   }
   document.getElementById('tryon-screen').classList.add('hidden');
+  document.getElementById('shopping-list-screen').classList.remove('hidden');
+}
+
+function startLiveSteps(){
+  document.getElementById('shopping-list-screen').classList.add('hidden');
   renderStepTrack();
   renderStep();
   document.getElementById('live-screen').classList.remove('hidden');
@@ -1929,6 +1948,8 @@ document.getElementById('tryon-back').addEventListener('click', () => {
   stopTryonPreview();
   resetToSetup();
 });
+document.getElementById('start-guide-btn').addEventListener('click', startLiveSteps);
+document.getElementById('shopping-list-back').addEventListener('click', resetToSetup);
 
 // ---------- Save completed look ----------
 document.getElementById('save-look-btn').addEventListener('click', () => {
@@ -2161,10 +2182,6 @@ function renderStep(){
   document.getElementById('substitute-result').classList.add('hidden');
   document.getElementById('prev-btn').disabled = state.currentStep === 0;
   document.getElementById('next-btn').disabled = state.currentStep === state.steps.length - 1;
-  // "You'll need" only earns its space on the first step -- past that it was pinning the actual
-  // step card near the bottom of the screen on every single step, for a list the user already
-  // saw once. Hiding it past step 1 gives the step card real room to actually be visible.
-  document.getElementById('needed-products-section').classList.toggle('hidden', state.currentStep !== 0);
   updateStepTrack();
   renderFaceDiagram(step);
   renderProTip(step);
