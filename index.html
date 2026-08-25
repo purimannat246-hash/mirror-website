@@ -793,8 +793,10 @@
         <span class="price-pill" id="occasion-pill">Everyday</span>
       </div>
 
-      <span class="field-label">You'll need</span>
-      <div class="needed-products needed-products-inline" id="needed-products-list"></div>
+      <div id="needed-products-section">
+        <span class="field-label">You'll need</span>
+        <div class="needed-products needed-products-inline" id="needed-products-list"></div>
+      </div>
 
       <div class="step-track" id="step-track"></div>
 
@@ -2159,6 +2161,10 @@ function renderStep(){
   document.getElementById('substitute-result').classList.add('hidden');
   document.getElementById('prev-btn').disabled = state.currentStep === 0;
   document.getElementById('next-btn').disabled = state.currentStep === state.steps.length - 1;
+  // "You'll need" only earns its space on the first step -- past that it was pinning the actual
+  // step card near the bottom of the screen on every single step, for a list the user already
+  // saw once. Hiding it past step 1 gives the step card real room to actually be visible.
+  document.getElementById('needed-products-section').classList.toggle('hidden', state.currentStep !== 0);
   updateStepTrack();
   renderFaceDiagram(step);
   renderProTip(step);
