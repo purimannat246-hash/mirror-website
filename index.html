@@ -394,6 +394,49 @@
   }
   .speak-toggle.on{ color:var(--pink); }
 
+  .pro-tip-card{
+    margin-top:12px;
+    border-radius:12px;
+    padding:12px 14px;
+    border:2px solid var(--line);
+  }
+  .pro-tip-card.unlocked{
+    background:var(--pink);
+    box-shadow:3px 3px 0 rgba(0,0,0,0.6);
+  }
+  .pro-tip-card.locked{
+    background:var(--surface-2);
+  }
+  .pro-tip-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:700;
+    margin-bottom:5px;
+  }
+  .pro-tip-card.unlocked .pro-tip-label{ color:#000; }
+  .pro-tip-card.locked .pro-tip-label{ color:var(--muted); }
+  .pro-tip-label svg{ width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+  .pro-tip-text{
+    font-size:12.5px;
+    font-weight:600;
+    color:#000;
+    margin:0;
+    line-height:1.45;
+  }
+  .pro-tip-locked-text{
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--muted);
+    margin:0;
+    line-height:1.45;
+  }
+  .pro-tip-locked-text a{ color:var(--pink); font-weight:700; }
+
   .diagram-card{
     background:var(--surface);
     border:2px solid var(--line);
@@ -773,6 +816,7 @@
         <button class="speak-toggle on" id="speak-toggle">Read steps aloud</button>
         <button class="substitute-btn" id="substitute-btn">Don't have this? Get a swap</button>
         <div class="substitute-result hidden" id="substitute-result"></div>
+        <div class="pro-tip-card" id="pro-tip-card"></div>
       </div>
 
       <div class="diagram-card">
@@ -1339,9 +1383,10 @@ First list every product the routine needs as "productsNeeded" (short common nam
 - "product": the product used for that step (must match one of the productsNeeded entries)
 - "zone": exactly one of: "forehead", "brows", "eyelids", "under-eyes", "cheeks", "nose", "lips", "jawline", "chin", "all-over" — pick whichever face area this product actually goes on
 - "color": a hex color code (e.g. "#C81E4B") for roughly what this product's shade looks like — a red lipstick gets a red, a nude concealer a warm beige, a black mascara near-black, a pink blush a pink, etc. Best guess is fine.
+- "proTip": one advanced technique a professional MUA would add on top of the basic instruction — a step up in skill, not a repeat of it (max 12 words)
 
 Respond with ONLY valid JSON in exactly this shape, no markdown, no extra text:
-{"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","color":""}]}`;
+{"productsNeeded":[""],"steps":[{"title":"","instructions":"","product":"","zone":"","color":"","proTip":""}]}`;
 
   try {
     const raw = await callClaude([{ type: "text", text: prompt }], FAST_TEXT_MODEL);
@@ -2116,7 +2161,38 @@ function renderStep(){
   document.getElementById('next-btn').disabled = state.currentStep === state.steps.length - 1;
   updateStepTrack();
   renderFaceDiagram(step);
+  renderProTip(step);
   if (readAloudOn) speakStep(step.title, step.instructions);
+}
+
+// Every step already gets a "proTip" from the routine generation (an advanced technique on top
+// of the base instruction) -- Pro accounts see it, free accounts see a locked teaser instead.
+// This is the same soft, client-side nudge as the saved-guide limit (see FREE_GUIDE_LIMIT):
+// there's no server to actually withhold the AI response, so a free account technically has the
+// text in the page already -- the point is giving free users a real, visible reason to upgrade on
+// every single step, not airtight enforcement.
+function renderProTip(step){
+  const card = document.getElementById('pro-tip-card');
+  const starIcon = '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.4 5.6 6.1.6-4.6 4.1 1.4 6-5.3-3.2-5.3 3.2 1.4-6-4.6-4.1 6.1-.6Z"/></svg>';
+  const lockIcon = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  if (isProAccount()) {
+    card.className = 'pro-tip-card unlocked';
+    card.innerHTML = `
+      <div class="pro-tip-label">${starIcon}Pro tip</div>
+      <p class="pro-tip-text">${escapeHtml(step.proTip || '')}</p>
+    `;
+    return;
+  }
+  card.className = 'pro-tip-card locked';
+  card.innerHTML = `
+    <div class="pro-tip-label">${lockIcon}Pro tip — locked</div>
+    <p class="pro-tip-locked-text">There's a pro-level technique for this step — <a href="#" id="pro-tip-upgrade">unlock with Glomi Pro</a>.</p>
+  `;
+  document.getElementById('pro-tip-upgrade').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchTab('account');
+    openCheckout();
+  });
 }
 
 document.getElementById('prev-btn').addEventListener('click', () => {
